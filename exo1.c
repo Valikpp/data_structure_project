@@ -23,13 +23,14 @@ HashMap *hashmap_create(){
         nv->table[i].key = NULL;
         nv->table[i].value = NULL;
     }
+    return nv;
 }
 
 int hashmap_insert(HashMap *map, const char* key, void* value){
     int hash=simple_hash(key);
     int i = 0;
     int indice = (hash+i)%TABLE_SIZE;
-    void * cle_courante = map->table[indice].key;
+    void * cle_courante = (void*)(map->table)[indice].key;
     //on parcours jusqua trouver une case vide
     while ((cle_courante)&&(cle_courante!=TOMBSTONE)){
         i++;
@@ -40,8 +41,10 @@ int hashmap_insert(HashMap *map, const char* key, void* value){
             return 0;
         }
     }
-    map->table[indice].value = value;
-    return i;
+    map->table[indice].key = strdup(key);
+    map->table[indice].value = malloc(sizeof(value));
+    memcpy(map->table[indice].value,value,sizeof(value));
+    return i+1;
 }
 void * hashmap_get(HashMap *map, const char * key){
     int hash=simple_hash(key);
@@ -72,8 +75,8 @@ int hashmap_remove(HashMap *map,const char *key){
     //on parcours jusqua trouver une case vide
     while (cle_courante){
         if(strcmp(cle_courante,key)==0){
-            free((map->table[indice]).value);
-            free((map->table[indice]).key);
+            free(map->table[indice].value);
+            free(map->table[indice].key);
             (map->table[indice]).key = TOMBSTONE;
             return 1;
         }
@@ -90,8 +93,12 @@ int hashmap_remove(HashMap *map,const char *key){
 
 void hashmap_destroy(HashMap *map){
     for(int i = 0;i<TABLE_SIZE;i++){
-        free((map->table[i]).key);
-        free((map->table[i]).value);
+        if((map->table[i]).key!=TOMBSTONE){
+            free((map->table[i]).key);
+            free((map->table[i]).value);
+        } else {
+            map->table[i].key = NULL;
+        }
     }
     free(map->table);
     free(map);
