@@ -42,8 +42,7 @@ int hashmap_insert(HashMap *map, const char* key, void* value){
         }
     }
     map->table[indice].key = strdup(key);
-    map->table[indice].value = malloc(sizeof(value));
-    memcpy(map->table[indice].value,value,sizeof(value));
+    map->table[indice].value = value;
     return i+1;
 }
 void * hashmap_get(HashMap *map, const char * key){
@@ -75,9 +74,9 @@ int hashmap_remove(HashMap *map,const char *key){
     //on parcours jusqua trouver une case vide
     while (cle_courante){
         if(strcmp(cle_courante,key)==0){
-            free(map->table[indice].value);
             free(map->table[indice].key);
             (map->table[indice]).key = TOMBSTONE;
+            map->table[indice].value = NULL;
             return 1;
         }
         i++;
@@ -104,3 +103,15 @@ void hashmap_destroy(HashMap *map){
     free(map);
 }
 
+
+    //map->table[indice].value = malloc(sizeof(value));
+
+    // On recopie la valeur dans la table de hashage pour eviter les modification de valeur a l'interieur de la table
+    /* SINON 
+    value = a
+    hashmap_insert(key,value);
+    value = b
+    hashmap_get(key) -> b 
+    PAS LOGIQUE POUR UTILISATION, on veut recevoir "a"
+    */
+    //memcpy(map->table[indice].value,value,sizeof(value));
