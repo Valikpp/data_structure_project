@@ -46,17 +46,29 @@ Instruction *parse_code_instruction(const char *line,HashMap *labels, int code_c
 
     if (countesp>2){
         char label[256];
-        sscanf(line,"%s %s %s,%s",label, mnemonic, operand1, operand2);
+        if (countoper>1){
+            sscanf(line,"%s %s %s,%s",label, mnemonic, operand1, operand2);
+        } else {
+            sscanf(line,"%s %s %s",label, mnemonic, operand1);
+        }
         int *code_c = malloc(sizeof(int));
         *code_c = code_count;
         hashmap_insert(labels,strdup(label),code_c);
     }else{
-        sscanf(line,"%s %s,%s", mnemonic, operand1, operand2);
+        if (countoper>1){
+            sscanf(line,"%s %s,%s", mnemonic, operand1, operand2);
+        } else {
+            sscanf(line,"%s %s", mnemonic, operand1);
+        }
     }
-
-
-
-
-
+    Instruction * inst = (Instruction*)malloc(sizeof(Instruction));
+    inst->mnemonic = strdup(mnemonic);
+    inst->operand1 = strdup(operand1);
+    if (countoper>1){
+        inst->operand2 =strdup(operand2);
+    } else {
+        inst->operand2 = NULL;
+    }
+    return inst;
 }
 
