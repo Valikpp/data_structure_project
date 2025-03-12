@@ -10,7 +10,7 @@ MemoryHandler *memory_init(int size){
     segment->size = size;
     handler->free_list = segment;
     handler->allocated = hashmap_create();
-    handler->memory = (void**)malloc(sizeof(void*)*size);
+    handler->memory = NULL; //(void**)malloc(sizeof(void*)*size);
     return handler;
 }
 
@@ -67,7 +67,11 @@ int create_segment(MemoryHandler * handler,const char *name,int start, int size)
     new_seg->start = start;
     new_seg->size = size;
     hashmap_insert(handler->allocated,name,new_seg);
-    prev->next = seg_libre->next; //prev peut etre null?
+    if(prev){
+        prev->next = seg_libre->next; 
+    } else{
+        handler->free_list = seg_libre->next; 
+    }
 
     handler->memory[start] = malloc(size);  
     assert(handler->memory[start]);
@@ -129,6 +133,7 @@ int remove_segment(MemoryHandler * handler, const char *name){
 
 
     }
+    free(aliberer);
 
     return 1;
 }
