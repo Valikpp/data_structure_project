@@ -15,19 +15,15 @@ MemoryHandler *memory_init(int size){
 }
 
 Segment* find_free_segment(MemoryHandler* handler, int start, int size, Segment ** prev){
+    if (!handler) return NULL;
     Segment * free_list = handler->free_list;
-    Segment * tmp = handler->free_list;
-    while (free_list)
-    {
+    Segment * prec = NULL;
+    while (free_list){
         if((free_list->start <= start)&&(free_list->size>=size)){
-            if(tmp==handler->free_list){
-                *prev = NULL;
-            }else{
-                *prev = tmp; 
-            }
+            *prev=prec;
             return free_list; 
         }
-        tmp = free_list;
+        prec = free_list;
         free_list = free_list->next;
     }
     return NULL;
@@ -47,7 +43,7 @@ int create_segment(MemoryHandler * handler,const char *name,int start, int size)
         before = malloc(sizeof(Segment));
         assert(before);
         before->start = seg_libre->start;
-        before->size = start-seg_libre->start;
+        before->size = start-seg_libre->start; //initialiser next a NULL
         //liason avec le precedent
         if(prev){
             prev->next = before;
@@ -56,21 +52,22 @@ int create_segment(MemoryHandler * handler,const char *name,int start, int size)
         }
         prev = before;
     }
+    //il existe de l'espace libre après le nouveau segment
     if(seg_libre->start+seg_libre->size > start+size){
         after = malloc(sizeof(Segment));
         assert(after);
         after->start = start+size;
         after->size = seg_libre->size - start - size;
         //liason avec le suivant
-        after->next = seg_libre->next;
-        seg_libre->next = after;
+        after->next = seg_libre->next; // ?? prq on a echangé? before->next=after  
+        seg_libre->next = after;           //after->next=seg_libre->after. 
     }
     new_seg = malloc(sizeof(Segment));
     assert(new_seg);
     new_seg->start = start;
     new_seg->size = size;
     hashmap_insert(handler->allocated,name,new_seg);
-    prev->next = seg_libre->next;
+    prev->next = seg_libre->next; //prev peut etre null?
 
     handler->memory[start] = malloc(size);  
     assert(handler->memory[start]);
@@ -80,8 +77,62 @@ int create_segment(MemoryHandler * handler,const char *name,int start, int size)
 }
 
 int remove_segment(MemoryHandler * handler, const char *name){
+    Segment *aliberer= (Segment*)hashmap_get(handler->allocated,name);
+    //l'element n'existe pas/ n'est pas alloue
+    if (aliberer==NULL) return 0;
+    //on supprime de la hashmap
+    hashmap_remove(handler->allocated,name);
+    Segment *courant=handler->free_list;
+    int merged=0;
+    Segment *before;
+    Segment *prec=NULL;
+    //merge avec before
+    while (courant){
+        if (courant->start+courant->size==aliberer->start){
+            courant->size+=aliberer->size;
+            merged=1;
+            before=courant;
+            break;
+        }
+        courant=courant->next;  
+    }
+    courant=handler->free_list;
+    //merge avec after
+    
+     while (courant){
+        if (aliberer->start+aliberer->size==courant->start){
+            if (!merged){
+                courant->start=aliberer->start;
+                courant->size+=aliberer->size;
+                merged=1;
+            }else{
+            before->size+=courant->size;
+            Segment *tmp=courant->next;
+
+            //suppression du courant 
+            if (prec==NULL) handler->free_list=courant->next;
+            else prec->next=courant->next;
+    
+            free(courant);
+            }
+
+            break;
+        }
+        prec=courant;
+        courant=courant->next;  
+    }
+
+    if (!merged){
+        //ajout en tete (on fait ordonnés?)
+        aliberer->next=handler->free_list;
+        handler->free_list=aliberer;
+
+
+    }
+
     return 1;
 }
+
 
 
 //Foncton hors enonce pour verifier le travail de create_segment

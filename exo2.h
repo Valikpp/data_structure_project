@@ -23,6 +23,8 @@ int create_segment(MemoryHandler * handler,const char *name,int start, int size)
 
 void afficher_liste_libre(MemoryHandler *handler);
 
+int remove_segment(MemoryHandler * handler, const char *name);
+
 #endif
 
 
