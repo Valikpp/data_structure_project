@@ -1,5 +1,6 @@
 #ifndef EXO3
 #define EXO3
+#define NBMININST 30
 #include "exo2.h"
 
 typedef struct _instruction{
