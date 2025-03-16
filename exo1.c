@@ -103,6 +103,14 @@ void hashmap_destroy(HashMap *map){
     free(map);
 }
 
+void hashmap_show_keys(HashMap *map){
+    for(int i = 0;i<TABLE_SIZE;i++){
+        if(((map->table[i]).key!=TOMBSTONE) && ((map->table[i]).key!=NULL)){
+            printf("%s\n",map->table[i].key);
+        }
+    }
+}
+
 
     //map->table[indice].value = malloc(sizeof(value));
 
