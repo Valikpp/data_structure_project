@@ -110,6 +110,13 @@ void hashmap_show_keys(HashMap *map){
         }
     }
 }
+void hashmap_show_pairs_Integer(HashMap *map){
+    for(int i = 0;i<TABLE_SIZE;i++){
+        if(((map->table[i]).key!=TOMBSTONE) && ((map->table[i]).key!=NULL)){
+            printf("%s --> %d\n",map->table[i].key,*(int *)(map->table[i].value));
+        }
+    }
+}
 
 
     //map->table[indice].value = malloc(sizeof(value));
