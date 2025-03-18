@@ -65,7 +65,7 @@ Instruction *parse_code_instruction(const char *line, HashMap *labels, int code_
     if (label) {
         int *code_c = malloc(sizeof(int));
         *code_c = code_count;
-        hashmap_insert(labels, strdup(label), code_c);
+        hashmap_insert(labels, label, code_c);
     }
 
     return inst;
@@ -152,9 +152,34 @@ ParserResult *parse(const char *filename){
         }
     }
     parser->code_count=nbcode;
-
+    fclose(F);
     return parser;
 }
+
+
+void free_parser_result(ParserResult *result){
+    for(int i = 0; i<result->data_count;i++){
+        Instruction* inst = result->data_instructions[i];
+        free(inst->mnemonic);
+        free(inst->operand1);
+        if (inst->operand2) free(inst->operand2);
+        free(inst);
+    }
+    free(result->data_instructions);
+    for(int i = 0; i<result->code_count;i++){
+        Instruction* inst = result->code_instructions[i];
+        free(inst->mnemonic);
+        free(inst->operand1);
+        if (inst->operand2) free(inst->operand2);
+        free(inst);
+    }
+    free(result->code_instructions);
+    hashmap_destroy(result->memory_locations);
+    hashmap_destroy(result->labels);
+    free(result);
+}
+
+
 
 void instruction_show(Instruction* inst){
     printf("mnemonic = %s | operand1 = %s | operand2 = %s\n",inst->mnemonic,inst->operand1, (inst->operand2)? inst->operand2 : "null");

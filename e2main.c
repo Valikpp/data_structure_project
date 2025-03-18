@@ -7,6 +7,6 @@ int main(){
     afficher_liste_libre(handler);
     remove_segment(handler,"data");
     afficher_liste_libre(handler);
-    hashmap_destroy(handler->allocated);
+    free_memory_handler(handler);
     return 0;
 }

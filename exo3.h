@@ -27,4 +27,6 @@ ParserResult *parse(const char *filename);
 void instruction_show(Instruction* inst);
 
 void parser_show(ParserResult * parser);
+
+void free_parser_result(ParserResult *result);
 #endif

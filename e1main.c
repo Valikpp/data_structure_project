@@ -16,6 +16,7 @@ int main(){
     // printf("%s\n", (char *)hashmap_get(map,"t2"));
     hashmap_show_pairs_Integer(map);
     hashmap_remove(map,"five");
+    free(five);
     hashmap_destroy(map);
     return 0;
 }

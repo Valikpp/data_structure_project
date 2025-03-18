@@ -10,7 +10,7 @@ MemoryHandler *memory_init(int size){
     segment->size = size;
     handler->free_list = segment;
     handler->allocated = hashmap_create();
-    handler->memory = NULL; //(void**)malloc(sizeof(void*)*size);
+    handler->memory = (void**)malloc(sizeof(void*)*size);
     return handler;
 }
 
@@ -138,7 +138,23 @@ int remove_segment(MemoryHandler * handler, const char *name){
     return 1;
 }
 
-
+void free_memory_handler(MemoryHandler * handler){
+    hashmap_destroy(handler->allocated);
+    for(int i = 0; i<handler->total_size;i++){
+        if(handler->memory[i]){
+             free(handler->memory[i]);
+        }
+    }
+    free(handler->memory);
+    Segment * courant = handler->free_list;
+    Segment * tmp = NULL;
+    while(courant){
+        tmp = courant;
+        courant= courant->next;
+        free(tmp);
+    }
+    free(handler);
+}
 
 //Foncton hors enonce pour verifier le travail de create_segment
 void afficher_liste_libre(MemoryHandler *handler){
