@@ -3,6 +3,8 @@
 #define NBMININST 30
 #include "exo2.h"
 
+extern int nb_data_occ;
+
 typedef struct _instruction{
     char * mnemonic; //Instruction mnemonic (ou nom de variable pour .DATA)
     char * operand1; //Premier operande (ou type pour .DATA)

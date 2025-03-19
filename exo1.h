@@ -29,6 +29,8 @@ void hashmap_destroy(HashMap *map);
 void hashmap_show_keys(HashMap *map);
 void hashmap_show_pairs_Integer(HashMap *map);
 
+int* int_to_point(int value);
+
 #endif
 
 

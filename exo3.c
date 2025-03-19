@@ -1,5 +1,7 @@
 #include "exo3.h"
 
+int nb_data_occ = 0;
+
 Instruction *parse_data_instruction(const char * line, HashMap *memory_locations){
     static int nb_occ = 0;
     char mnemonic[256];
@@ -22,6 +24,7 @@ Instruction *parse_data_instruction(const char * line, HashMap *memory_locations
     *value = nb_occ;
     hashmap_insert(memory_locations,mnemonic,value);
     nb_occ += count;
+    nb_data_occ = nb_occ;
     return inst;
 }
 

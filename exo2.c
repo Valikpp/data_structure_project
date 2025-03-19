@@ -10,7 +10,7 @@ MemoryHandler *memory_init(int size){
     segment->size = size;
     handler->free_list = segment;
     handler->allocated = hashmap_create();
-    handler->memory = (void**)malloc(sizeof(void*)*size);
+    handler->memory = (void**)calloc(size,sizeof(void*));
     return handler;
 }
 

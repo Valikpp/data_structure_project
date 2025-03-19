@@ -118,6 +118,12 @@ void hashmap_show_pairs_Integer(HashMap *map){
     }
 }
 
+int* int_to_point(int value){
+    int * val = malloc(sizeof(int)); 
+    *val = value;
+    return val;
+}
+
 
     //map->table[indice].value = malloc(sizeof(value));
 
