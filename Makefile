@@ -34,5 +34,14 @@ e3main.o: e3main.c
 exo3.o: exo3.c
 	gcc $(CFLAGS) -c exo3.c
 
+e4main: e4main.o exo4.o exo3.o exo2.o exo1.o
+	$(CC) -o $@ $(CFLAGS) $^
+
+e4main.o: e4main.c
+	gcc $(CFLAGS) -c e4main.c
+
+exo4.o: exo4.c
+	gcc $(CFLAGS) -c exo4.c
+
 clean:
 	rm -f *.o *~ $(PROGRAMS)

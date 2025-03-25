@@ -41,29 +41,103 @@ void *load(MemoryHandler *handler, const char *segment_name, int pos){
 void allocate_variables(CPU *cpu, Instruction** data_instructions,int data_count){
     // nb_data_occ -- external variable qui contient la taille de l'espace necessaire au stockage des variables  
     create_segment(cpu->memory_handler,"DS",cpu->memory_handler->free_list->start,nb_data_occ);
+
+    //indice dans la memoire de CPU
+    int pos=0;
     for(int i = 0; i<data_count;i++){
         char * operand2 = data_instructions[i]->operand2;
+        //indice general sur la chaine
         int k = 0;
-        char buffer[50];
-        int is_array = 0;
+        char buffer[20];
+        //indice sur buffer 
+        int buff_ind = 0;
+        //printf("--------Instruction---------:\n");
+        instruction_show(data_instructions[i]);
+        //printf("--------Parsed values---------:\n");
         while (operand2[k]!='\0')
         {
             if (operand2[k]==','){
-                is_array = 1;
                 int value;
-                sscanf(buffer,"%d",&value);
-                store(cpu->memory_handler,"DS");
-                strcpy(buffer,"");
+                sscanf(buffer," %d ",&value);
+                store(cpu->memory_handler,"DS",pos,int_to_point(value));
+                //printf("memory[%d] = %d \n",pos,value);
+                // valeur de buffer est recureperee, on remet remet a vide (en rangeant l'indice)
+                strcpy(buffer, "                   ");
+                buff_ind = 0;
+                pos++;
             } else {
-                buffer[k] = operand2[k];
+                buffer[buff_ind] = operand2[k];
+                buff_ind++;
             }
             k++;
         }
         int value;
-        sscanf(buffer,"%d",&value);
-        store(cpu->memory_handler,"DS");
-        
-
+        sscanf(buffer," %d ",&value);
+        // printf("memory[%d] = %d ",pos,value);
+        // printf("\n\n");
+        store(cpu->memory_handler,"DS",pos,int_to_point(value));
+        pos++;
     }
 }
 
+void print_data_segment(CPU * cpu){
+    Segment * segment = (Segment*)hashmap_get(cpu->memory_handler->allocated,"DS");
+    if(!segment) return;
+    printf("========= Content of memory segment <DS> =========\nDS = [");
+    for(int i=0;i<segment->size;i++){
+        if (cpu->memory_handler->memory){
+            printf("%d,",*(int*)cpu->memory_handler->memory[i]);
+        } else {
+            printf("_,");
+        }
+    }
+    printf("]\n");
+    printf("========= END of memory segment <DS> =========\n");
+}
+
+
+
+
+
+
+void preview_allocate_variables(CPU *cpu, Instruction** data_instructions,int data_count){
+    // nb_data_occ -- external variable qui contient la taille de l'espace necessaire au stockage des variables  
+    create_segment(cpu->memory_handler,"DS",cpu->memory_handler->free_list->start,nb_data_occ);
+
+    //indice dans la memoire de CPU
+    int pos=0;
+    for(int i = 0; i<data_count;i++){
+        char * operand2 = data_instructions[i]->operand2;
+        //indice general sur la chaine
+        int k = 0;
+        char buffer[20];
+        //indice sur buffer 
+        int buff_ind = 0;
+        printf("--------Instruction---------:\n");
+        instruction_show(data_instructions[i]);
+        printf("--------Parsed values---------:\n");
+        while (operand2[k]!='\0')
+        {
+            if (operand2[k]==','){
+                int value;
+                sscanf(buffer," %d ",&value);
+                //store(cpu->memory_handler,"DS",pos,int_to_point(value));
+                printf("memory[%d] = %d \n",pos,value);
+                // valeur de buffer est recureperee, on remet remet a vide (en rangeant l'indice)
+                strcpy(buffer, "                   ");
+                buff_ind = 0;
+                pos++;
+            } else {
+                buffer[buff_ind] = operand2[k];
+                buff_ind++;
+            }
+            k++;
+        }
+        int value;
+        sscanf(buffer," %d ",&value);
+        printf("memory[%d] = %d ",pos,value);
+        printf("\n\n");
+        //store(cpu->memory_handler,"DS",pos,int_to_point(value));
+        pos++;
+    }
+}
