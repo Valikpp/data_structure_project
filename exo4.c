@@ -125,7 +125,7 @@ void preview_allocate_variables(CPU *cpu, Instruction** data_instructions,int da
                 sscanf(buffer," %d ",&value);
                 //store(cpu->memory_handler,"DS",pos,int_to_point(value));
                 printf("memory[%d] = %d \n",pos,value);
-                // valeur de buffer est recureperee, on remet remet a vide (en rangeant l'indice)
+                // valeur de buffer est recuperee, on remet a vide (en rangeant l'indice)
                 strcpy(buffer, "                   ");
                 buff_ind = 0;
                 pos++;
