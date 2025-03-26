@@ -8,12 +8,14 @@ CPU * cpu_init(int memory_size){
     hashmap_insert(cpu->context, "BX", int_to_point(0));
     hashmap_insert(cpu->context, "CX", int_to_point(0));
     hashmap_insert(cpu->context, "DX", int_to_point(0));
+    cpu->constant_pool = hashmap_create();
     return cpu;
 }
 
 void cpu_destroy(CPU *cpu){
     free_memory_handler(cpu->memory_handler);
     hashmap_destroy(cpu->context);
+    hashmap_destroy(cpu->constant_pool);
     free(cpu);
 }
 
@@ -140,4 +142,109 @@ void preview_allocate_variables(CPU *cpu, Instruction** data_instructions,int da
         //store(cpu->memory_handler,"DS",pos,int_to_point(value));
         pos++;
     }
+}
+
+
+int matches(const char *pattern, const char *string) {
+    regex_t regex;
+    int result = regcomp(&regex, pattern, REG_EXTENDED);
+    if (result) {
+        fprintf(stderr, "Regex compilation failed for pattern: %s\n", pattern);
+        return 0;
+    }
+    result = regexec(&regex, string, 0, NULL, 0);
+    regfree(&regex);
+    return result == 0;
+}
+
+void * immediate_addressing(CPU * cpu, const char * operand){
+    char * pattern = "^[0-9]+$";
+    if (!matches(pattern,operand)){
+        return NULL;
+    }
+    int * result = (int *)hashmap_get(cpu->constant_pool,operand);
+    if (result){
+        return (void*)result;
+    }
+    int value;
+    sscanf(operand,"%d",&value);
+    result = int_to_point(value);
+    hashmap_insert(cpu->constant_pool,operand,result);
+    return (void*)result;  
+}
+
+void *register_addressing(CPU * cpu, const char*operand){
+    char * pattern = "^[A-D]X$";
+    if (!matches(pattern,operand)){
+        return NULL;
+    }
+    int *result=(int *)hashmap_get(cpu->context,operand);
+    if (!result) return NULL;
+
+    return (void *) result;
+}
+
+void *memory_direct_addressing(CPU * cpu, const char*operand){
+    char * pattern = "^\[[0-9]+\]$";
+    if (!matches(pattern,operand)){
+        return NULL;
+    }
+    int value;
+    sscanf(operand,"[%d]",&value);
+    if (value>=cpu->memory_handler->total_size){
+        return NULL;
+    }
+    return cpu->memory_handler->memory[value];
+}
+
+void * register_indirect_addressing(CPU * cpu, const char*operand){
+    char * pattern = "^\[[A-D]X\]$";
+    if (!matches(pattern,operand)){
+        return NULL;
+    }
+    int *result=(int *)hashmap_get(cpu->context,operand);
+    if (!result) return NULL;
+    if ((*result)>=cpu->memory_handler->total_size){
+        return NULL;
+    }
+    return cpu->memory_handler->memory[*result];
+}
+
+void handle_MOV(CPU * cpu, void * src, void *dest){
+    *((int*)dest) = *((int*)src);
+}
+
+CPU *setup_test_environment() {
+    // Initialiser le CPU
+    CPU *cpu = cpu_init(1024);
+    if (!cpu) {
+        printf("Error: CPU initialization failed\n");
+        return NULL;
+    }
+
+    // Initialiser les registres avec des valeurs spécifiques
+    int *ax = (int *)hashmap_get(cpu->context, "AX");
+    int *bx = (int *)hashmap_get(cpu->context, "BX");
+    int *cx = (int *)hashmap_get(cpu->context, "CX");
+    int *dx = (int *)hashmap_get(cpu->context, "DX");
+
+    *ax = 3;
+    *bx = 6;
+    *cx = 100;
+    *dx = 0;
+
+    // Créer et initialiser le segment de données
+    if (!hashmap_get(cpu->memory_handler->allocated, "DS")) {
+        create_segment(cpu->memory_handler, "DS", 0, 20);
+
+        // Initialiser le segment de données avec des valeurs de test
+        for (int i = 0; i < 10; i++) {
+            int *value = (int *)malloc(sizeof(int));
+            *value = i * 10 + 5;  // Valeurs 5, 15, 25, 35...
+            store(cpu->memory_handler, "DS", i, value);
+        }
+    }
+
+    printf("Test environment initialized.\n");
+    return cpu;
 }
