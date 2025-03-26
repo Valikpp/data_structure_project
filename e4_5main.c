@@ -22,7 +22,7 @@ int main(){
         }
     }
 
-    //print_data_segment(cpu);
+    print_data_segment(cpu);
 
     free_parser_result(parser);
     cpu_destroy(cpu);

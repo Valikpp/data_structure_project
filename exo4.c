@@ -87,7 +87,7 @@ void print_data_segment(CPU * cpu){
     if(!segment) return;
     printf("========= Content of memory segment <DS> =========\nDS = [");
     for(int i=0;i<segment->size;i++){
-        if (cpu->memory_handler->memory){
+        if (cpu->memory_handler->memory[i]){
             printf("%d,",*(int*)cpu->memory_handler->memory[i]);
         } else {
             printf("_,");
