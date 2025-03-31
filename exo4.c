@@ -248,3 +248,11 @@ CPU *setup_test_environment() {
     printf("Test environment initialized.\n");
     return cpu;
 }
+
+void *resolve_addressing(CPU *cpu, const char *operand){
+            void *pt=immediate_addressing(cpu,operand);
+            if (!pt) pt=register_addressing(cpu, operand);
+            if (!pt) pt=memory_direct_addressing(cpu, operand);
+            if (!pt) pt=register_indirect_addressing(cpu, operand);
+        return pt;
+}
