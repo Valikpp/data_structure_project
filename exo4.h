@@ -27,4 +27,5 @@ void *memory_direct_addressing(CPU * cpu, const char*operand);
 void * register_indirect_addressing(CPU * cpu, const char*operand);
 void handle_MOV(CPU * cpu, void * src, void *dest);
 CPU *setup_test_environment();
+void *resolve_addressing(CPU *cpu, const char *operand);
 #endif

@@ -8,6 +8,9 @@ CPU * cpu_init(int memory_size){
     hashmap_insert(cpu->context, "BX", int_to_point(0));
     hashmap_insert(cpu->context, "CX", int_to_point(0));
     hashmap_insert(cpu->context, "DX", int_to_point(0));
+    hashmap_insert(cpu->context, "IP", int_to_point(0));
+    hashmap_insert(cpu->context, "ZF", int_to_point(0));
+    hashmap_insert(cpu->context, "SF", int_to_point(0));
     cpu->constant_pool = hashmap_create();
     return cpu;
 }
@@ -250,9 +253,11 @@ CPU *setup_test_environment() {
 }
 
 void *resolve_addressing(CPU *cpu, const char *operand){
-            void *pt=immediate_addressing(cpu,operand);
-            if (!pt) pt=register_addressing(cpu, operand);
-            if (!pt) pt=memory_direct_addressing(cpu, operand);
-            if (!pt) pt=register_indirect_addressing(cpu, operand);
-        return pt;
+    void *pt=immediate_addressing(cpu,operand);
+    if (!pt) pt=register_addressing(cpu, operand);
+    if (!pt) pt=memory_direct_addressing(cpu, operand);
+    if (!pt) pt=register_indirect_addressing(cpu, operand);
+    return pt;
 }
+
+

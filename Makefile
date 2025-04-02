@@ -1,7 +1,7 @@
 CFLAGS = -g -Wno-unused-parameter
 CC = gcc
 
-PROGRAMS = e1main e2main e3main 
+PROGRAMS = e1main e2main e3main e4main e4_5main
 
 .PHONY:	all clean
 
