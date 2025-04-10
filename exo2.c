@@ -1,6 +1,15 @@
 #include "exo2.h"
 
 MemoryHandler *memory_init(int size){
+    /*
+        Memory Handler initialization:
+        Initializes structure MemoryHandler by assigning initial default values and initializing substructures
+    
+        Input: 
+            int size - size of memory
+        Output: 
+            MemoryHandler * new_handler
+    */
     MemoryHandler *handler = (MemoryHandler*)malloc(sizeof(MemoryHandler));
     assert(handler);
     handler->total_size = size;
@@ -15,10 +24,26 @@ MemoryHandler *memory_init(int size){
 }
 
 Segment* find_free_segment(MemoryHandler* handler, int start, int size, Segment ** prev){
+    
+    /*
+        Searching for an empty memory segment: 
+        The function checks if a memory segment can be allocated at the specified coordinates and, if found successfully, returns the address of the segment containing the desired segment.
+        
+        Input: 
+            MemoryHandler * handler
+            int start - desired start position 
+            int size - desired segment's length
+            Segment ** prev - pointer to previous segment
+        Output: 
+            Segment * result - pointer to the segment containing the desired segment
+    */
+    
     if (!handler) return NULL;
+    // search from first unallocated segment
     Segment * free_list = handler->free_list;
     Segment * prec = NULL;
     while (free_list){
+        // Current segment satisfies desired start and size
         if((free_list->start <= start)&&(free_list->size>=size)){
             *prev=prec;
             return free_list; 
@@ -26,25 +51,42 @@ Segment* find_free_segment(MemoryHandler* handler, int start, int size, Segment 
         prec = free_list;
         free_list = free_list->next;
     }
+    // Memory segment can not be allocated at the specified coordinates 
     return NULL;
 }
 
 int create_segment(MemoryHandler * handler,const char *name,int start, int size){
+    
+    /*
+        Segment Allocation:
+        The function allocates the desired segment in memory by removing it from the list of free segments and updates the list of available segments
+        
+        Input: 
+            MemoryHandler * handler
+            int start - desired start position 
+            int size - desired segment's length
+            string name - name of segment (key in "allocated" Hashmap) 
+        Output: 
+            0 - unsuccessful creation
+            1 - successful allocation
+    */
+    
     Segment * prev;
     Segment * seg_libre = find_free_segment(handler,start,size,&prev);
     if(!seg_libre){
         return 0;
     }
-    //Creation des sous-segments
+    //Creation of subsegments
     Segment * before = NULL;
     Segment * new_seg;
     Segment * after = NULL;
+    //Free memory space before desired segment
     if(seg_libre->start<start){
         before = malloc(sizeof(Segment));
         assert(before);
         before->start = seg_libre->start;
-        before->size = start-seg_libre->start; //initialiser next a NULL
-        //liason avec le precedent
+        before->size = start-seg_libre->start; //initialize next by NULL
+        //merging with previous
         if(prev){
             prev->next = before;
         } else{
@@ -52,7 +94,7 @@ int create_segment(MemoryHandler * handler,const char *name,int start, int size)
         }
         prev = before;
     }
-    //il existe de l'espace libre après le nouveau segment
+    //Free memory space after desired segment
     if(seg_libre->start+seg_libre->size > start+size){
         after = malloc(sizeof(Segment));
         assert(after);
@@ -62,10 +104,12 @@ int create_segment(MemoryHandler * handler,const char *name,int start, int size)
         after->next = seg_libre->next; // ?? prq on a echangé? before->next=after  
         seg_libre->next = after;           //after->next=seg_libre->after. 
     }
+    // Desired segment allocation
     new_seg = malloc(sizeof(Segment));
     assert(new_seg);
     new_seg->start = start;
     new_seg->size = size;
+    // Pair <seg_name , Segment*> inserted in handler->allocated
     hashmap_insert(handler->allocated,name,new_seg);
     if(prev){
         prev->next = seg_libre->next; 
@@ -73,6 +117,7 @@ int create_segment(MemoryHandler * handler,const char *name,int start, int size)
         handler->free_list = seg_libre->next; 
     }
 
+    // Allocation of required memory
     handler->memory[start] = malloc(size);  
     assert(handler->memory[start]);
 
@@ -81,16 +126,30 @@ int create_segment(MemoryHandler * handler,const char *name,int start, int size)
 }
 
 int remove_segment(MemoryHandler * handler, const char *name){
+    
+    /*
+        Delete Selected Segment:
+        Deletes the segment with the specified name from the table of selected segments and returns it to the free segment partition.
+        When a segment is returned to free, it is merged with neighboring free segments (if possible) to avoid memory fragmentation.    
+
+        Input: 
+            MemoryHandler * handler
+            string name - name of segment (key in "allocated" Hashmap) 
+        Output: 
+            0 - unsuccessful deletion
+            1 - successful deletion
+    */
+    
     Segment *aliberer= (Segment*)hashmap_get(handler->allocated,name);
-    //l'element n'existe pas/ n'est pas alloue
+    //element does not exist / is not allocated
     if (aliberer==NULL) return 0;
-    //on supprime de la hashmap
+    //remove segment from hashmap
     hashmap_remove(handler->allocated,name);
     Segment *courant=handler->free_list;
     int merged=0;
     Segment *before;
     Segment *prec=NULL;
-    //merge avec before
+    //merge with previous
     while (courant){
         if (courant->start+courant->size==aliberer->start){
             courant->size+=aliberer->size;
@@ -101,8 +160,8 @@ int remove_segment(MemoryHandler * handler, const char *name){
         courant=courant->next;  
     }
     courant=handler->free_list;
-    //merge avec after
-    
+   
+    //merge with next 
      while (courant){
         if (aliberer->start+aliberer->size==courant->start){
             if (!merged){
@@ -113,7 +172,7 @@ int remove_segment(MemoryHandler * handler, const char *name){
             before->size+=courant->size;
             Segment *tmp=courant->next;
 
-            //suppression du courant 
+            //current suppression
             if (prec==NULL) handler->free_list=courant->next;
             else prec->next=courant->next;
     
@@ -127,7 +186,7 @@ int remove_segment(MemoryHandler * handler, const char *name){
     }
 
     if (!merged){
-        //ajout en tete (on fait ordonnés?)
+        //addition in head (we do ordered?)
         aliberer->next=handler->free_list;
         handler->free_list=aliberer;
 
@@ -139,6 +198,13 @@ int remove_segment(MemoryHandler * handler, const char *name){
 }
 
 void free_memory_handler(MemoryHandler * handler){
+    /*
+        Delete MemoryHandler:
+        The function clears the memory space occupied by the structure  
+        Input: 
+            MemoryHandler * handler
+        Output: NULL
+    */
     hashmap_destroy(handler->allocated);
     for(int i = 0; i<handler->total_size;i++){
         if(handler->memory[i]){
@@ -156,7 +222,7 @@ void free_memory_handler(MemoryHandler * handler){
     free(handler);
 }
 
-//Foncton hors enonce pour verifier le travail de create_segment
+//Function out of task to check the work of create_segment
 void afficher_liste_libre(MemoryHandler *handler){
     Segment * tmp = handler->free_list;
     printf("Liste de segments : ");
