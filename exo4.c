@@ -57,7 +57,7 @@ void allocate_variables(CPU *cpu, Instruction** data_instructions,int data_count
         //indice sur buffer 
         int buff_ind = 0;
         //printf("--------Instruction---------:\n");
-        instruction_show(data_instructions[i]);
+        print_instruction_exp(data_instructions[i]);
         //printf("--------Parsed values---------:\n");
         while (operand2[k]!='\0')
         {
@@ -88,7 +88,7 @@ void allocate_variables(CPU *cpu, Instruction** data_instructions,int data_count
 void print_data_segment(CPU * cpu){
     Segment * segment = (Segment*)hashmap_get(cpu->memory_handler->allocated,"DS");
     if(!segment) return;
-    printf("========= Content of memory segment <DS> =========\nDS = [");
+    printf("==== Content of data segment <DS> ====\nDS = [");
     for(int i=0;i<segment->size;i++){
         if (cpu->memory_handler->memory[i]){
             printf("%d,",*(int*)cpu->memory_handler->memory[i]);
@@ -97,7 +97,7 @@ void print_data_segment(CPU * cpu){
         }
     }
     printf("]\n");
-    printf("========= END of memory segment <DS> =========\n");
+    printf("=== END of data segment <DS> ===\n");
 }
 
 
@@ -119,7 +119,7 @@ void preview_allocate_variables(CPU *cpu, Instruction** data_instructions,int da
         //indice sur buffer 
         int buff_ind = 0;
         printf("--------Instruction---------:\n");
-        instruction_show(data_instructions[i]);
+        print_instruction_exp(data_instructions[i]);
         printf("--------Parsed values---------:\n");
         while (operand2[k]!='\0')
         {

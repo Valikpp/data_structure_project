@@ -14,7 +14,7 @@ int main(){
     hashmap_insert(map,"nine",nine);
     // printf("%s\n", (char *)hashmap_get(map,"t1"));
     // printf("%s\n", (char *)hashmap_get(map,"t2"));
-    hashmap_show_pairs_Integer(map);
+    print_hashmap_int(map);
     hashmap_remove(map,"five");
     free(five);
     hashmap_destroy(map);

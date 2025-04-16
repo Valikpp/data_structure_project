@@ -8,7 +8,7 @@ int main(){
     Instruction ** inst=parser->code_instructions; //tableau d'instructions de CODE de notre pseudo assembleur
     
     print_data_segment(cpu);
-    hashmap_show_pairs_Integer(cpu->context);
+    print_hashmap_int(cpu->context);
     
     for (int i=0;i<parser->code_count;i++){
         if (strcmp(inst[i]->mnemonic,"MOV")==0){
@@ -26,7 +26,7 @@ int main(){
     }
 
     print_data_segment(cpu);
-    hashmap_show_pairs_Integer(cpu->context);
+    print_hashmap_int(cpu->context);
     
     free_parser_result(parser);
     cpu_destroy(cpu);

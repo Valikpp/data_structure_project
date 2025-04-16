@@ -156,3 +156,44 @@ int execute_instruction(CPU *cpu, Instruction *instr){
     }
     return handle_instruction(cpu,instr,src,dest);
 }
+
+Instruction *fetch_next_instruction(CPU *cpu){
+    Segment *cs=hashmap_get(cpu->memory_handler->allocated,"CS");
+    int* ip =hashmap_get(cpu->context,"IP");
+    if (ip==NULL || cs==NULL || *ip<cs->start || *ip<cs->start+cs->size) return NULL;
+    Instruction* inst =(Instruction *) load(cpu->memory_handler,"CS",*ip);
+    (ip)++;
+    return inst;
+}
+
+int run_program(CPU *cpu){  //memory handler deja rempli
+    printf("CPU INITIAL STATE \n");
+    print_data_segment(cpu);
+    print_hashmap_int(cpu->context);
+
+    Segment *ds=hashmap_get(cpu->memory_handler->allocated,"DS");
+
+    Instruction *courant=fetch_next_instruction(cpu);
+    while (courant){
+       // print inst
+        printf("PRESS \"ENTER\" TO EXECUTE THE NEXT INSTRUCTION : ");
+        print_instruction(courant);
+        printf("OR \"q\" to QUIT EXECUTION\n ");
+        char val;
+        scanf("%c",&val);
+        if (val=='\n'){
+            int e=execute_instruction(cpu,courant);
+            assert(e);
+            courant=fetch_next_instruction(cpu);
+        }
+        else if (val=='q' || val=='Q'){
+            break; //je remet ip a 0?
+        }
+    }
+
+    printf("CPU FINAL STATE \n");
+    print_data_segment(cpu);
+    print_hashmap_int(cpu->context);
+    printf("\n");
+
+}

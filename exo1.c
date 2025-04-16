@@ -176,14 +176,14 @@ void hashmap_show_keys(HashMap *map){
         }
     }
 }
-void hashmap_show_pairs_Integer(HashMap *map){
+void print_hashmap_int(HashMap *map){
     /*
         Utility function showing hashmap with integer values
         ATTENTION: Other type of values cause Segmentation fault!
     */
     for(int i = 0;i<TABLE_SIZE;i++){
         if(((map->table[i]).key!=TOMBSTONE) && ((map->table[i]).key!=NULL)){
-            printf("%s --> %d\n",map->table[i].key,*(int *)(map->table[i].value));
+            printf("%s -> %d\n",map->table[i].key,*(int *)(map->table[i].value));
         }
     }
 }

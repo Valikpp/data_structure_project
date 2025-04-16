@@ -184,24 +184,36 @@ void free_parser_result(ParserResult *result){
 
 
 
-void instruction_show(Instruction* inst){
+void print_instruction_exp(Instruction* inst){
     printf("mnemonic = %s | operand1 = %s | operand2 = %s\n",inst->mnemonic,inst->operand1, (inst->operand2)? inst->operand2 : "null");
 }
+//interrogation mark 
+
+void print_instruction(Instruction *inst){
+    printf("%s %s", inst->mnemonic, inst->operand1);
+    if (inst->operand2){
+        print(" %s",inst->operand2);
+    }
+    printf("\n");
+
+}
+
+
 
 void parser_show(ParserResult * parser){
     printf("====== Parser content ======\n");
     printf("______ .DATA instructions ______\n");
     for (int i = 0; i<parser->data_count;i++){
-        instruction_show(parser->data_instructions[i]);
+        print_instruction_exp(parser->data_instructions[i]);
     }
     printf("--- memory locations ---\n");
-    hashmap_show_pairs_Integer(parser->memory_locations);
+    print_hashmap_int(parser->memory_locations);
     printf("\n______ .CODE instructions ______\n");
     for (int i = 0; i<parser->code_count;i++){
-        instruction_show(parser->code_instructions[i]);
+        print_instruction_exp(parser->code_instructions[i]);
     }
     printf("--- labels ---\n");
-    hashmap_show_pairs_Integer(parser->labels);
+    print_hashmap_int(parser->labels);
 
     printf("====== END of Parser content ======\n");
 }
