@@ -188,7 +188,7 @@ void *register_addressing(CPU * cpu, const char*operand){
 }
 
 void *memory_direct_addressing(CPU * cpu, const char*operand){
-    char * pattern = "^\[[0-9]+\]$";
+    char * pattern = "^\\[[0-9]+\\]$";
     if (!matches(pattern,operand)){
         return NULL;
     }
@@ -201,16 +201,20 @@ void *memory_direct_addressing(CPU * cpu, const char*operand){
 }
 
 void * register_indirect_addressing(CPU * cpu, const char*operand){
-    char * pattern = "^\[[A-D]X\]$";
+    char * pattern = "^\\[[A-D]X\\]$";
     if (!matches(pattern,operand)){
         return NULL;
     }
-    int *result=(int *)hashmap_get(cpu->context,operand);
+    char * regist = (char*)malloc(sizeof(char)*3);
+    strncpy(regist,operand+1,2);
+    regist[2] = '\0';
+    int *result=(int *)hashmap_get(cpu->context,regist);
+    free(regist);
     if (!result) return NULL;
-    if ((*result)>=cpu->memory_handler->total_size){
+    if ((*(int*)result)>=cpu->memory_handler->total_size){
         return NULL;
     }
-    return cpu->memory_handler->memory[*result];
+    return cpu->memory_handler->memory[*(int*)result];
 }
 
 void handle_MOV(CPU * cpu, void * src, void *dest){

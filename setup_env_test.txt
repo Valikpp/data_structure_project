@@ -1,0 +1,7 @@
+.DATA
+x DW 42
+.CODE
+MOV AX,2 
+MOV BX,AX
+MOV CX,[1]
+MOV DX,[AX]
