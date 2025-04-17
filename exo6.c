@@ -83,7 +83,7 @@ void allocate_code_segment(CPU *cpu, Instruction **code_instructions, int code_c
     int start = cpu->memory_handler->free_list->start;
     create_segment(cpu->memory_handler,"CS",start,code_count);
     for (int i=0;i<code_count;i++){
-        cpu->memory_handler->memory[start+i] = code_instructions[i];
+        cpu->memory_handler->memory[start+i] = code_instructions[i]; //utiliser store
     }
     // int * reg_ip = (int*)hashmap_get(cpu->context,"IP");
     // if(reg_ip) *reg_ip = 0;
@@ -145,6 +145,22 @@ int handle_instruction(CPU *cpu, Instruction *instr, void *src, void *dest){
         *reg_ip=cs->size-1;
         return 1;
     }
+    if(strcmp(mnemonic,"PUSH")==0){
+        int *reg;
+        if (src) reg=hashmap_get(cpu->context,src);
+        else  reg=hashmap_get(cpu->context,"AX");
+        int p=push_value(cpu,*reg);
+        if (p!=-1) return 1;
+    }
+
+    if(strcmp(mnemonic,"POP")==0){
+        int *reg;
+        if (dest) reg=hashmap_get(cpu->context,dest);
+        else  reg=hashmap_get(cpu->context,"AX");
+        int p=pop_value(cpu,reg);
+        if (p!=-1) return 1;
+    }
+
     return 0;
 }
 
@@ -155,6 +171,26 @@ int execute_instruction(CPU *cpu, Instruction *instr){
         src = resolve_addressing(cpu,instr->operand2);
     }
     return handle_instruction(cpu,instr,src,dest);
+
+    // if (strcmp(instr->mnemonic, "PUSH") == 0) {
+    //     src = instr->operand1 ? resolve_operand(cpu, instr->operand1) : cpu->registers[REG_AX];
+    //     dest = NULL; // pas de destination
+    // }
+    // else if (strcmp(instr->mnemonic, "POP") == 0) {
+    //     dest = instr->operand1 ? resolve_operand(cpu, instr->operand1) : cpu->registers[REG_AX];
+    //     src = NULL; // pas de source
+    // }
+    // else {
+    //     if (instr->operand2) {
+    //         src = resolve_operand(cpu, instr->operand2);
+    //     }
+    //     if (instr->operand1) {
+    //         dest = resolve_operand(cpu, instr->operand1);
+    //     }
+    // }
+
+
+
 }
 
 Instruction *fetch_next_instruction(CPU *cpu){
@@ -183,7 +219,7 @@ int run_program(CPU *cpu){  //memory handler deja rempli
         scanf("%c",&val);
         if (val=='\n'){
             int e=execute_instruction(cpu,courant);
-            assert(e);
+            if (e==NULL) return 0;
             courant=fetch_next_instruction(cpu);
         }
         else if (val=='q' || val=='Q'){
@@ -195,5 +231,5 @@ int run_program(CPU *cpu){  //memory handler deja rempli
     print_data_segment(cpu);
     print_hashmap_int(cpu->context);
     printf("\n");
-
+    return 1;
 }

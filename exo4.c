@@ -1,16 +1,25 @@
 #include "exo4.h"
 
-CPU * cpu_init(int memory_size){
+CPU * cpu_init(int memory_size){ //?
+    if (memory_size<128) return NULL;
     CPU * cpu = (CPU*)malloc(sizeof(CPU));
     cpu->memory_handler = memory_init(memory_size);
+    create_segment(cpu->memory_handler,"SS",0,128);
+
     cpu->context = hashmap_create();
     hashmap_insert(cpu->context, "AX", int_to_point(0));
     hashmap_insert(cpu->context, "BX", int_to_point(0));
     hashmap_insert(cpu->context, "CX", int_to_point(0));
     hashmap_insert(cpu->context, "DX", int_to_point(0));
+
     hashmap_insert(cpu->context, "IP", int_to_point(0));
     hashmap_insert(cpu->context, "ZF", int_to_point(0));
     hashmap_insert(cpu->context, "SF", int_to_point(0));
+
+    hashmap_insert(cpu->context, "SP", int_to_point(127));
+    hashmap_insert(cpu->context, "BP", int_to_point(127));
+
+
     cpu->constant_pool = hashmap_create();
     return cpu;
 }
@@ -37,10 +46,8 @@ void* store(MemoryHandler *handler, const char *segment_name, int pos, void *dat
 
 void *load(MemoryHandler *handler, const char *segment_name, int pos){
     Segment *seg=(Segment *)hashmap_get(handler->allocated,segment_name);
-    if (!seg || (pos >= seg->size)) return NULL;
-    int final_pos = seg->start + pos;
-
-    return (handler->memory[final_pos]);
+    if (!seg || (pos >= seg->size) || (pos<seg->start)) return NULL;
+    return (handler->memory[seg->start+pos]);
 }
 
 void allocate_variables(CPU *cpu, Instruction** data_instructions,int data_count){
@@ -194,7 +201,7 @@ void *memory_direct_addressing(CPU * cpu, const char*operand){
     }
     int value;
     sscanf(operand,"[%d]",&value);
-    if (value>=cpu->memory_handler->total_size){
+    if (value>=cpu->memory_handler->total_size || value<0){
         return NULL;
     }
     return cpu->memory_handler->memory[value];
@@ -218,6 +225,7 @@ void * register_indirect_addressing(CPU * cpu, const char*operand){
 }
 
 void handle_MOV(CPU * cpu, void * src, void *dest){
+    if (!src || !dest) return;
     *((int*)dest) = *((int*)src);
 }
 
@@ -263,5 +271,26 @@ void *resolve_addressing(CPU *cpu, const char *operand){
     if (!pt) pt=register_indirect_addressing(cpu, operand);
     return pt;
 }
+
+int push_value(CPU *cpu, int value){ //retourne -1 et pas 0 en cas d'erreur
+    int *sp=hashmap_get(cpu->context,"SP");
+    if (*sp<0) return -1;
+    void* s=store(cpu->memory_handler,"SS",*sp,int_to_point(value));
+    if (!s) return -1;
+    (*sp)--;
+    return 1;
+}
+
+int pop_value(CPU *cpu, int* dest){ //caster le void* à l'appel?
+    int *sp=hashmap_get(cpu->context,"SP");
+    if (*sp>=128) return -1;
+    void*l=load(cpu->memory_handler,"SS",(*sp)+1);
+    if (!l) return -1;
+    *dest=*((int *)l);
+    (*sp)++;
+    return 1;
+}
+
+
 
 

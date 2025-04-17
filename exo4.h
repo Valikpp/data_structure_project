@@ -28,4 +28,6 @@ void * register_indirect_addressing(CPU * cpu, const char*operand);
 void handle_MOV(CPU * cpu, void * src, void *dest);
 CPU *setup_test_environment();
 void *resolve_addressing(CPU *cpu, const char *operand);
+int push_value(CPU *cpu, int value);
+int pop_value(CPU *cpu, int* dest);
 #endif
