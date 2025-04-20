@@ -19,6 +19,8 @@ CPU * cpu_init(int memory_size){ //?
     hashmap_insert(cpu->context, "SP", int_to_point(127));
     hashmap_insert(cpu->context, "BP", int_to_point(127));
 
+    hashmap_insert(cpu->context, "ES", int_to_point(-1));
+
 
     cpu->constant_pool = hashmap_create();
     return cpu;
@@ -106,10 +108,6 @@ void print_data_segment(CPU * cpu){
     printf("]\n");
     printf("=== END of data segment <DS> ===\n");
 }
-
-
-
-
 
 
 void preview_allocate_variables(CPU *cpu, Instruction** data_instructions,int data_count){
@@ -204,7 +202,7 @@ void *memory_direct_addressing(CPU * cpu, const char*operand){
     if (value>=cpu->memory_handler->total_size || value<0){
         return NULL;
     }
-    return cpu->memory_handler->memory[value];
+    return cpu->memory_handler->memory[value]; //load?
 }
 
 void * register_indirect_addressing(CPU * cpu, const char*operand){
@@ -213,7 +211,7 @@ void * register_indirect_addressing(CPU * cpu, const char*operand){
         return NULL;
     }
     char * regist = (char*)malloc(sizeof(char)*3);
-    strncpy(regist,operand+1,2);
+    strncpy(regist,operand+1,2); // why not directly on the operand
     regist[2] = '\0';
     int *result=(int *)hashmap_get(cpu->context,regist);
     free(regist);
@@ -269,6 +267,7 @@ void *resolve_addressing(CPU *cpu, const char *operand){
     if (!pt) pt=register_addressing(cpu, operand);
     if (!pt) pt=memory_direct_addressing(cpu, operand);
     if (!pt) pt=register_indirect_addressing(cpu, operand);
+    if (!pt) pt=segment_override_addressing(cpu,operand);
     return pt;
 }
 
@@ -290,6 +289,104 @@ int pop_value(CPU *cpu, int* dest){ //caster le void* à l'appel?
     (*sp)++;
     return 1;
 }
+
+void *segment_override_addressing(CPU *cpu, const char *operand){
+    char * pattern = "^\\[[(D|C|S|E)S:[A-D]X\\]$";
+    if (!matches(pattern,operand)){
+        return NULL;
+    }
+    char seg[3];
+    char regist[3];
+    sscanf(operand,"[%s:%s]",seg,regist);
+    int *vregist=(int *)hashmap_get(cpu->context,regist);
+    if (!vregist) return NULL;
+
+    return load(cpu->memory_handler,seg,*vregist);
+
+}
+
+int find_free_address_strategy(MemoryHandler *handler, int size, int strategy){
+    Segment *list=handler->free_list;
+    switch (strategy) {
+        case 0:
+            while (list){
+                if (list->size>=size) return list->start;
+                list=list->next;
+            }
+            break;
+        case 1:
+            int min = INT_MAX;
+            int res=-1;
+            while (list){
+                int dif=list->size-size;
+                if (dif>=0 && dif<min) {
+                min=dif;
+                res=list->start;
+                }
+                list=list->next;
+            }
+            return res;
+            break;
+        case 2:
+            int max=-1;
+            int res=-1;
+            while (list){
+                if (list->size>max && list->size>=max) res=list->start;
+                list=list->next;
+            }
+            return res;
+            break;
+        
+
+    return -1;
+    }
+}  
+
+int alloc_es_segment(CPU* cpu){
+    int* ax=hashmap_get(cpu->context,"AX");
+    int *bx=hashmap_get(cpu->context,"BX");
+    int start=find_free_address_strategy(cpu->memory_handler,*ax,*bx);
+    int succ=create_segment(cpu->memory_handler,"ES",start,*ax);
+
+    int *zf=hashmap_get(cpu->context,"ZF");
+    *zf=!(succ);
+
+    for (int i=0;i<*ax;i++){
+        store(cpu->memory_handler,"ES",i,int_to_point(0)); //constant pool? add it directly in int to point maybe
+    }
+
+    int* es=hashmap_get(cpu->context,"ES");
+    *es=start;
+
+}
+
+int free_es_segment(CPU* cpu){
+    Segment* esseg=hashmap_get(cpu->memory_handler->allocated,"ES");
+    if  (esseg==NULL) return 0;
+
+    for (int i=0;i<esseg->size;i++){
+        free(load(cpu->memory_handler,"ES",i)); //constant pool? add it directly in int to point maybe
+    }
+
+    int succ=hashmap_remove(cpu->memory_handler->allocated,"ES");
+    if (succ==0) return succ;
+
+    int* es=hashmap_get(cpu->context,"ES");
+    *es=-1;
+
+    return 1;
+
+}
+
+
+
+
+
+
+
+
+
+
 
 
 

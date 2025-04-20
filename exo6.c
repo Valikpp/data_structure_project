@@ -161,6 +161,16 @@ int handle_instruction(CPU *cpu, Instruction *instr, void *src, void *dest){
         if (p!=-1) return 1;
     }
 
+    if(strcmp(mnemonic,"ALLOC")==0){
+        int succ=alloc_es_segment(cpu);
+        return succ;
+    }
+
+    if(strcmp(mnemonic,"FREE")==0){
+        int succ=free_es_segment(cpu);
+        return succ;
+    }
+
     return 0;
 }
 
@@ -188,7 +198,6 @@ int execute_instruction(CPU *cpu, Instruction *instr){
     //         dest = resolve_operand(cpu, instr->operand1);
     //     }
     // }
-
 
 
 }
