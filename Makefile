@@ -1,7 +1,7 @@
 CFLAGS = -g -Wno-unused-parameter
 CC = gcc
 
-PROGRAMS = e1main e2main e3main e4main e4_5main
+PROGRAMS = e1main e2main e3main e4main e4_5main e6main
 
 .PHONY:	all clean
 
@@ -49,7 +49,14 @@ e4_5main: e4_5main.o exo4.o exo3.o exo2.o exo1.o
 e4_5main.o: e4_5main.c
 	gcc $(CFLAGS) -c e4_5main.c
 
-	
+exo6.o: exo6.c
+	gcc $(CFLAGS) -c exo6.c
+
+e6main: e6main.o exo6.o exo4.o exo3.o exo2.o exo1.o
+	$(CC) -o $@ $(CFLAGS) $^
+
+e4_5main.o: e6main.c
+	gcc $(CFLAGS) -c e6main.c
 
 clean:
 	rm -f *.o *~ $(PROGRAMS)
