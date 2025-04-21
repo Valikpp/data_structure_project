@@ -1,7 +1,7 @@
 #include "exo6.h"
 
 int main(){
-CPU * cpu = setup_test_environment();
+    CPU * cpu = cpu_init(1024);
     ParserResult * parser = parse("setup_env_test.txt");
 
     parser_show(parser);

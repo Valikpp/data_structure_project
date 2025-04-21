@@ -136,7 +136,7 @@ ParserResult *parse(const char *filename){
     if( buffer[strlen(buffer)-1] == '\n'){
         buffer[strlen(buffer)-1] = '\0';
     }
-    while(lect!=NULL){
+    while(lect!=NULL && strcmp(lect,"\0")!=0){
         //Si le nombre d'instruction dépasse la taille du tableau
         if (nbcode>=taillecode){
             //On double la taille du tableau
@@ -185,6 +185,7 @@ void free_parser_result(ParserResult *result){
 
 
 void print_instruction_exp(Instruction* inst){
+    if (!inst) return;
     printf("mnemonic = %s | operand1 = %s | operand2 = %s\n",inst->mnemonic,inst->operand1, (inst->operand2)? inst->operand2 : "null");
 }
 //interrogation mark 
