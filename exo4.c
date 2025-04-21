@@ -211,7 +211,7 @@ void * register_indirect_addressing(CPU * cpu, const char*operand){
         return NULL;
     }
     char * regist = (char*)malloc(sizeof(char)*3);
-    strncpy(regist,operand+1,2); // why not directly on the operand
+    strncpy(regist,operand+1,2); 
     regist[2] = '\0';
     int *result=(int *)hashmap_get(cpu->context,regist);
     free(regist);

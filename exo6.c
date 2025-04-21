@@ -175,6 +175,7 @@ int handle_instruction(CPU *cpu, Instruction *instr, void *src, void *dest){
 }
 
 int execute_instruction(CPU *cpu, Instruction *instr){
+    
     void *dest = resolve_addressing(cpu,instr->operand1);
     void *src = NULL;
     if(instr->operand2){
