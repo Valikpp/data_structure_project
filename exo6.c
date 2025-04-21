@@ -24,7 +24,7 @@ int search_and_replace(char **str, HashMap *values) {
     for (int i = 0; i < values->size; i++) {
         if (values->table[i].key && values->table[i].key != (void *)-1) {
             char *key = values->table[i].key;
-            int* value = (int*)(long)values->table[i].value;
+            int* value = (int*)(long)values->table[i].value;  //corrigé erreur int -> int* 
 
             // Find potential substring match
             char *substr = strstr(input, key);
@@ -46,7 +46,7 @@ int search_and_replace(char **str, HashMap *values) {
                 strcat(new_str, substr + key_len);
 
                 // Free and update original string
-                free(input);
+                //free(input);
                 *str = new_str;
                 input = new_str;
 
@@ -72,9 +72,11 @@ int resolve_constants(ParserResult * result){
         Instruction * inst = result->code_instructions[i];
         if(inst->operand2){
             search_and_replace(&(inst->operand2),result->memory_locations);
-        } else {
+            search_and_replace(&(inst->operand1),result->memory_locations);
+        }else{
             search_and_replace(&(inst->operand1),result->labels);
-        }
+        } 
+        
     }
     return 1;
 }
@@ -83,10 +85,10 @@ void allocate_code_segment(CPU *cpu, Instruction **code_instructions, int code_c
     int start = cpu->memory_handler->free_list->start;
     create_segment(cpu->memory_handler,"CS",start,code_count);
     for (int i=0;i<code_count;i++){
-        cpu->memory_handler->memory[start+i] = code_instructions[i]; //utiliser store
+        store(cpu->memory_handler,"CS",i,code_instructions[i]);
     }
-    // int * reg_ip = (int*)hashmap_get(cpu->context,"IP");
-    // if(reg_ip) *reg_ip = 0;
+    int * reg_ip = (int*)hashmap_get(cpu->context,"IP");
+    if(*reg_ip) *reg_ip = 0;
 }
 
 int handle_instruction(CPU *cpu, Instruction *instr, void *src, void *dest){
@@ -176,30 +178,20 @@ int handle_instruction(CPU *cpu, Instruction *instr, void *src, void *dest){
 
 int execute_instruction(CPU *cpu, Instruction *instr){
 
-    void *dest = resolve_addressing(cpu,instr->operand1);
-    void *src = NULL;
-    if(instr->operand2){
-        src = resolve_addressing(cpu,instr->operand2);
+    if (strcmp(instr->mnemonic, "JMP") == 0 || strcmp(instr->mnemonic, "JZ") == 0 ||
+     strcmp(instr->mnemonic, "JNZ") == 0){
+        return handle_instruction(cpu,instr,resolve_addressing(cpu,instr->operand1),NULL);
     }
-    return handle_instruction(cpu,instr,src,dest);
 
-    // if (strcmp(instr->mnemonic, "PUSH") == 0) {
-    //     src = instr->operand1 ? resolve_operand(cpu, instr->operand1) : cpu->registers[REG_AX];
-    //     dest = NULL; // pas de destination
-    // }
-    // else if (strcmp(instr->mnemonic, "POP") == 0) {
-    //     dest = instr->operand1 ? resolve_operand(cpu, instr->operand1) : cpu->registers[REG_AX];
-    //     src = NULL; // pas de source
-    // }
-    // else {
-    //     if (instr->operand2) {
-    //         src = resolve_operand(cpu, instr->operand2);
-    //     }
-    //     if (instr->operand1) {
-    //         dest = resolve_operand(cpu, instr->operand1);
-    //     }
-    // }
+    if (strcmp(instr->mnemonic, "PUSH") == 0) {
+        return handle_instruction(cpu,instr,resolve_addressing(cpu,instr->operand1),NULL);
+    }   
+    
+    if (strcmp(instr->mnemonic, "POP") == 0){
+        return handle_instruction(cpu,instr,NULL,resolve_addressing(cpu,instr->operand1));
+    }
 
+    return handle_instruction(cpu,instr,resolve_addressing(cpu,instr->operand2),resolve_addressing(cpu,instr->operand1));
 
 }
 
@@ -213,15 +205,17 @@ Instruction *fetch_next_instruction(CPU *cpu){
 }
 
 int run_program(CPU *cpu){  //memory handler deja rempli
-    printf("CPU INITIAL STATE \n");
+    printf("CPU INITIAL STATE : \n");
     print_data_segment(cpu);
     print_hashmap_int(cpu->context);
 
     Segment *ds=hashmap_get(cpu->memory_handler->allocated,"DS");
+    if (!ds) return 0;
 
     Instruction *courant=fetch_next_instruction(cpu);
+    printf("pas d'instructions\n");
     while (courant){
-       // print inst
+       
         printf("PRESS \"ENTER\" TO EXECUTE THE NEXT INSTRUCTION : ");
         print_instruction(courant);
         printf("OR \"q\" to QUIT EXECUTION\n ");
@@ -237,7 +231,7 @@ int run_program(CPU *cpu){  //memory handler deja rempli
         }
     }
 
-    printf("CPU FINAL STATE \n");
+    printf("CPU FINAL STATE : \n");
     print_data_segment(cpu);
     print_hashmap_int(cpu->context);
     printf("\n");

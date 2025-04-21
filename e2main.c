@@ -1,4 +1,4 @@
-#include "exo2.h"
+#include "exo3.h"
 
 int main(){
     MemoryHandler * handler = memory_init(1024);
@@ -8,5 +8,5 @@ int main(){
     remove_segment(handler,"data");
     afficher_liste_libre(handler);
     free_memory_handler(handler);
-    return 0;
+    return 0; 
 }

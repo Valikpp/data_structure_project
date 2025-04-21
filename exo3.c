@@ -160,26 +160,26 @@ ParserResult *parse(const char *filename){
 }
 
 
-void free_parser_result(ParserResult *result){
-    for(int i = 0; i<result->data_count;i++){
-        Instruction* inst = result->data_instructions[i];
-        free(inst->mnemonic);
-        free(inst->operand1);
-        if (inst->operand2) free(inst->operand2);
-        free(inst);
-    }
-    free(result->data_instructions);
-    for(int i = 0; i<result->code_count;i++){
-        Instruction* inst = result->code_instructions[i];
-        free(inst->mnemonic);
-        free(inst->operand1);
-        if (inst->operand2) free(inst->operand2);
-        free(inst);
-    }
-    free(result->code_instructions);
-    hashmap_destroy(result->memory_locations);
-    hashmap_destroy(result->labels);
-    free(result);
+void free_parser_result(ParserResult *parser){
+    // for(int i = 0; i<parser->data_count;i++){
+    //     Instruction* inst = parser->data_instructions[i];
+    //     free(inst->mnemonic);
+    //     free(inst->operand1);
+    //     if (inst->operand2) free(inst->operand2);
+    //     free(inst);
+    // }
+    free(parser->data_instructions);
+    // for(int i = 0; i<parser->code_count;i++){
+    //     Instruction* inst = parser->code_instructions[i];
+    //     free(inst->mnemonic);
+    //     free(inst->operand1);
+    //     if (inst->operand2) free(inst->operand2);
+    //     free(inst);
+    // }
+    free(parser->code_instructions);
+    hashmap_destroy(parser->memory_locations);
+    hashmap_destroy(parser->labels);
+    free(parser);
 }
 
 
@@ -202,21 +202,91 @@ void print_instruction(Instruction *inst){
 
 
 void parser_show(ParserResult * parser){
-    printf("====== Parser content ======\n");
-    printf("______ .DATA instructions ______\n");
+    printf("====== PARSER CONTENT ======\n\n");
+    printf("______ .DATA instructions ______\n\n");
     for (int i = 0; i<parser->data_count;i++){
         print_instruction_exp(parser->data_instructions[i]);
     }
-    printf("--- memory locations ---\n");
+    printf("\n --- memory locations ---\n");
     print_hashmap_int(parser->memory_locations);
-    printf("\n______ .CODE instructions ______\n");
+    printf("\n______ .CODE instructions ______\n\n");
     for (int i = 0; i<parser->code_count;i++){
         print_instruction_exp(parser->code_instructions[i]);
     }
-    printf("--- labels ---\n");
+    printf("\n --- labels ---\n\n ");
     print_hashmap_int(parser->labels);
 
-    printf("====== END of Parser content ======\n");
+    printf("====== END OF PARSER CONTENT ======\n\n");
 }
 
+void free_instruction(Instruction *inst){
+    free(inst->mnemonic);
+    if (inst->operand1) free(inst->operand1);
+    if (inst->operand2) free(inst->operand2);
+    free(inst);
+}
 
+void free_memory_handler(MemoryHandler * handler){
+    /*
+        Delete MemoryHandler:
+        The function clears the memory space occupied by the structure  
+        Input: 
+            MemoryHandler * handler
+        Output: NULL
+    */
+
+    Segment* data_segment = hashmap_get(handler->allocated, "DS");
+    if (data_segment) {
+        for (int i = 0; i < data_segment->size; i++) {
+            free(load(handler,"DS",i));
+        }
+    }
+
+    Segment* code_segment = hashmap_get(handler->allocated, "CS");
+    if (code_segment) {
+        for (int i = 0; i < code_segment->size; i++) {
+            free_instruction(load(handler,"CS",i));
+        }
+    }
+
+    Segment* extra_segment = hashmap_get(handler->allocated, "ES");
+    if (extra_segment) {
+        for (int i = 0; i < extra_segment->size; i++) {
+            free(load(handler,"ES",i));
+        }
+    }
+    Segment* stack_segment = hashmap_get(handler->allocated, "SS");
+	if (stack_segment) {
+		for (int i = 0; i < stack_segment->size; i++) {
+			free(load(handler,"SS",i));
+		}
+	}
+
+    hashmap_destroy(handler->allocated);
+
+    free(handler->memory);
+    Segment * courant = handler->free_list;
+    Segment * tmp = NULL;
+    while(courant){
+        tmp = courant;
+        courant= courant->next;
+        free(tmp);
+    }
+    free(handler);
+}
+
+void* store(MemoryHandler *handler, const char *segment_name, int pos, void *data){
+    Segment *seg=(Segment *)hashmap_get(handler->allocated,segment_name);
+    if (!seg || (pos >= seg->size)) return NULL;
+  
+    int true_pos = seg->start + pos;
+
+    handler->memory[true_pos] = data;
+    return data;
+}
+
+void *load(MemoryHandler *handler, const char *segment_name, int pos){
+    Segment *seg=(Segment *)hashmap_get(handler->allocated,segment_name);
+    if (!seg || (pos >= seg->size)) return NULL;
+    return (handler->memory[seg->start+pos]);
+}

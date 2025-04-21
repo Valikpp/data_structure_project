@@ -33,4 +33,10 @@ void print_instruction(Instruction *inst);
 void parser_show(ParserResult * parser);
 
 void free_parser_result(ParserResult *result);
+
+void free_memory_handler(MemoryHandler * handler);
+
+void* store(MemoryHandler *handler, const char *segment_name, int pos, void *data);
+void *load(MemoryHandler *handler, const char *segment_name, int pos);
+
 #endif

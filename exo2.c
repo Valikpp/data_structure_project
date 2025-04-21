@@ -197,30 +197,6 @@ int remove_segment(MemoryHandler * handler, const char *name){
     return 1;
 }
 
-void free_memory_handler(MemoryHandler * handler){
-    /*
-        Delete MemoryHandler:
-        The function clears the memory space occupied by the structure  
-        Input: 
-            MemoryHandler * handler
-        Output: NULL
-    */
-    hashmap_destroy(handler->allocated);
-    for(int i = 0; i<handler->total_size;i++){
-        if(handler->memory[i]){
-             free(handler->memory[i]);
-        }
-    }
-    free(handler->memory);
-    Segment * courant = handler->free_list;
-    Segment * tmp = NULL;
-    while(courant){
-        tmp = courant;
-        courant= courant->next;
-        free(tmp);
-    }
-    free(handler);
-}
 
 //Function out of task to check the work of create_segment
 void afficher_liste_libre(MemoryHandler *handler){
@@ -232,3 +208,4 @@ void afficher_liste_libre(MemoryHandler *handler){
     }
     printf("\n");
 }
+

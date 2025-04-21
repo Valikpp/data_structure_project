@@ -80,22 +80,29 @@ int hashmap_insert(HashMap *map, const char* key, void* value){
     map->table[indice].value = value;
     return i+1;
 }
+
+
+
 void * hashmap_get(HashMap *map, const char * key){
     /*
-        Hash Table Search:  
+        Hash Table Search:
             The function searches for a cell with a specified key and returns its value
-        Input: 
+        Input:
             HashMap *map -- pointer to initialized hashmap struct
-            const string key -- key of removed data 
+            const string key -- key of removed data
         Output: NULL if key does not exist in hashmap
                 void * data in case of a successful finding
     */
+
+   if(map == NULL || key==NULL){
+       return NULL;
+    }
     int hash=simple_hash(key);
     int i = 0;
     int indice = (hash+i)%TABLE_SIZE;
     char * cle_courante = map->table[indice].key;
     //on parcours jusqua trouver une case vide
-    
+
     while (cle_courante){
         if(strcmp(cle_courante,key)==0){
             return (map->table[indice]).value;
@@ -186,6 +193,7 @@ void print_hashmap_int(HashMap *map){
             printf("%s -> %d\n",map->table[i].key,*(int *)(map->table[i].value));
         }
     }
+    printf("\n");
 }
 
 int* int_to_point(int value){

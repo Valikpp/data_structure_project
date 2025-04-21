@@ -25,7 +25,9 @@ void afficher_liste_libre(MemoryHandler *handler);
 
 int remove_segment(MemoryHandler * handler, const char *name);
 
-void free_memory_handler(MemoryHandler * handler);
+
+
+
 
 #endif
 

@@ -2,9 +2,9 @@
 x DW 42
 y DB 10
 arr DB 20,21,22,23
-z DB 9
+z DB 1
 .CODE
 MOV AX,2
-MOV z,AX
+MOV BX,AX
 MOV CX,[x]
-MOV DX,[y]
+MOV DX,[AX]

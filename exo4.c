@@ -33,24 +33,7 @@ void cpu_destroy(CPU *cpu){
     free(cpu);
 }
 
-void* store(MemoryHandler *handler, const char *segment_name, int pos, void *data){
-    Segment *seg=(Segment *)hashmap_get(handler->allocated,segment_name);
-    if (!seg || (pos >= seg->size)) return NULL;
-  
-    int final_pos = seg->start + pos;
-    //si l'espace est deja occupe on free et on remplace par data
-    if(handler->memory[final_pos]){
-        free(handler->memory[final_pos]);
-    }
-    handler->memory[final_pos] = data;
-    return data;
-}
 
-void *load(MemoryHandler *handler, const char *segment_name, int pos){
-    Segment *seg=(Segment *)hashmap_get(handler->allocated,segment_name);
-    if (!seg || (pos >= seg->size)) return NULL;
-    return (handler->memory[seg->start+pos]);
-}
 
 void allocate_variables(CPU *cpu, Instruction** data_instructions,int data_count){
     // nb_data_occ -- external variable qui contient la taille de l'espace necessaire au stockage des variables  
@@ -62,21 +45,22 @@ void allocate_variables(CPU *cpu, Instruction** data_instructions,int data_count
         char * operand2 = data_instructions[i]->operand2;
         //indice general sur la chaine
         int k = 0;
-        char buffer[20];
+        char buffer[100];
         //indice sur buffer 
         int buff_ind = 0;
         //printf("--------Instruction---------:\n");
-        print_instruction_exp(data_instructions[i]);
+        //print_instruction_exp(data_instructions[i]);
         //printf("--------Parsed values---------:\n");
         while (operand2[k]!='\0')
         {
             if (operand2[k]==','){
+                buffer[buff_ind] = '\0';
                 int value;
                 sscanf(buffer," %d ",&value);
                 store(cpu->memory_handler,"DS",pos,int_to_point(value));
                 //printf("memory[%d] = %d \n",pos,value);
-                // valeur de buffer est recureperee, on remet remet a vide (en rangeant l'indice)
-                strcpy(buffer, "                   ");
+                // valeur de buffer est recureperee, on remet a vide (en rangeant l'indice)
+                buffer[0] = '\0';
                 buff_ind = 0;
                 pos++;
             } else {
@@ -85,6 +69,7 @@ void allocate_variables(CPU *cpu, Instruction** data_instructions,int data_count
             }
             k++;
         }
+        buffer[buff_ind] = '\0';
         int value;
         sscanf(buffer," %d ",&value);
         // printf("memory[%d] = %d ",pos,value);
@@ -98,15 +83,22 @@ void print_data_segment(CPU * cpu){
     Segment * segment = (Segment*)hashmap_get(cpu->memory_handler->allocated,"DS");
     if(!segment) return;
     printf("==== Content of data segment <DS> ====\nDS = [");
-    for(int i=0;i<segment->size;i++){
-        if (cpu->memory_handler->memory[segment->start+i]){
-            printf("%d,",*(int*)cpu->memory_handler->memory[segment->start+i]);
+
+    for(int i = 0; i < segment->size; i++){
+        void *value = load(cpu->memory_handler, "DS", i);
+        if (value) {
+            printf("%d", *(int*)value);
         } else {
-            printf("_,");
+            printf("_");
+        }
+
+        if (i < segment->size - 1) {
+            printf(",");
         }
     }
+
     printf("]\n");
-    printf("=== END of data segment <DS> ===\n");
+    printf("=== END of data segment <DS> ===\n \n");
 }
 
 
@@ -129,12 +121,13 @@ void preview_allocate_variables(CPU *cpu, Instruction** data_instructions,int da
         while (operand2[k]!='\0')
         {
             if (operand2[k]==','){
+                buffer[buff_ind] = '\0';
                 int value;
                 sscanf(buffer," %d ",&value);
                 //store(cpu->memory_handler,"DS",pos,int_to_point(value));
                 printf("memory[%d] = %d \n",pos,value);
                 // valeur de buffer est recuperee, on remet a vide (en rangeant l'indice)
-                strcpy(buffer, "                   ");
+                buffer[0] = '\0';
                 buff_ind = 0;
                 pos++;
             } else {
@@ -143,6 +136,7 @@ void preview_allocate_variables(CPU *cpu, Instruction** data_instructions,int da
             }
             k++;
         }
+        buffer[buff_ind] = '\0';
         int value;
         sscanf(buffer," %d ",&value);
         printf("memory[%d] = %d ",pos,value);
@@ -348,18 +342,27 @@ int find_free_address_strategy(MemoryHandler *handler, int size, int strategy){
 int alloc_es_segment(CPU* cpu){
     int* ax=hashmap_get(cpu->context,"AX");
     int *bx=hashmap_get(cpu->context,"BX");
+    if (!(*bx==0) || (*bx==1)|| (*bx==2)  ) return 0;
+     int *zf=hashmap_get(cpu->context,"ZF");
     int start=find_free_address_strategy(cpu->memory_handler,*ax,*bx);
+    if ((start)==-1 ) { 
+    *zf=1;
+    return 0;
+    }
     int succ=create_segment(cpu->memory_handler,"ES",start,*ax);
 
-    int *zf=hashmap_get(cpu->context,"ZF");
+   
     *zf=!(succ);
-
+    if (!succ) return 0;
     for (int i=0;i<*ax;i++){
         store(cpu->memory_handler,"ES",i,int_to_point(0)); //constant pool? add it directly in int to point maybe
     }
 
     int* es=hashmap_get(cpu->context,"ES");
     *es=start;
+
+    
+    return 1;
 
 
 }

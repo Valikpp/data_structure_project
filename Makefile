@@ -16,7 +16,7 @@ e1main.o: e1main.c
 exo1.o: exo1.c
 	gcc $(CFLAGS) -c exo1.c
 
-e2main: e2main.o exo2.o exo1.o
+e2main: e2main.o exo3.o exo2.o exo1.o
 	$(CC) -o $@ $(CFLAGS) $^
 
 e2main.o: e2main.c
