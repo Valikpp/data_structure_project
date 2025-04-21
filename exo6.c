@@ -24,14 +24,14 @@ int search_and_replace(char **str, HashMap *values) {
     for (int i = 0; i < values->size; i++) {
         if (values->table[i].key && values->table[i].key != (void *)-1) {
             char *key = values->table[i].key;
-            int value = (int)(long)values->table[i].value;
+            int* value = (int*)(long)values->table[i].value;
 
             // Find potential substring match
             char *substr = strstr(input, key);
             if (substr) {
                 // Construct replacement buffer
                 char replacement[64];
-                snprintf(replacement, sizeof(replacement), "%d", value);
+                snprintf(replacement, sizeof(replacement), "%d", *value);
 
                 // Calculate lengths
                 int key_len = strlen(key);

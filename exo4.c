@@ -48,7 +48,7 @@ void* store(MemoryHandler *handler, const char *segment_name, int pos, void *dat
 
 void *load(MemoryHandler *handler, const char *segment_name, int pos){
     Segment *seg=(Segment *)hashmap_get(handler->allocated,segment_name);
-    if (!seg || (pos >= seg->size) || (pos<seg->start)) return NULL;
+    if (!seg || (pos >= seg->size)) return NULL;
     return (handler->memory[seg->start+pos]);
 }
 
@@ -99,8 +99,8 @@ void print_data_segment(CPU * cpu){
     if(!segment) return;
     printf("==== Content of data segment <DS> ====\nDS = [");
     for(int i=0;i<segment->size;i++){
-        if (cpu->memory_handler->memory[i]){
-            printf("%d,",*(int*)cpu->memory_handler->memory[i]);
+        if (cpu->memory_handler->memory[segment->start+i]){
+            printf("%d,",*(int*)cpu->memory_handler->memory[segment->start+i]);
         } else {
             printf("_,");
         }
@@ -248,13 +248,15 @@ CPU *setup_test_environment() {
 
     // Créer et initialiser le segment de données
     if (!hashmap_get(cpu->memory_handler->allocated, "DS")) {
-        create_segment(cpu->memory_handler, "DS", 0, 20);
+        create_segment(cpu->memory_handler, "DS", cpu->memory_handler->free_list->start, 20);
 
         // Initialiser le segment de données avec des valeurs de test
         for (int i = 0; i < 10; i++) {
             int *value = (int *)malloc(sizeof(int));
             *value = i * 10 + 5;  // Valeurs 5, 15, 25, 35...
-            store(cpu->memory_handler, "DS", i, value);
+            printf("value: %d ",i);
+            void *succ= store(cpu->memory_handler, "DS", i, value);
+            printf("store succ: %d ",*(int*)succ);
         }
     }
 
@@ -339,8 +341,8 @@ int find_free_address_strategy(MemoryHandler *handler, int size, int strategy){
             break;
         
 
-    return -1;
     }
+    return -1;
 }  
 
 int alloc_es_segment(CPU* cpu){
@@ -358,6 +360,7 @@ int alloc_es_segment(CPU* cpu){
 
     int* es=hashmap_get(cpu->context,"ES");
     *es=start;
+
 
 }
 
