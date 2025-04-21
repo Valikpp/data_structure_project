@@ -307,6 +307,7 @@ void *segment_override_addressing(CPU *cpu, const char *operand){
 
 int find_free_address_strategy(MemoryHandler *handler, int size, int strategy){
     Segment *list=handler->free_list;
+    int min,max,res;
     switch (strategy) {
         case 0:
             while (list){
@@ -315,8 +316,8 @@ int find_free_address_strategy(MemoryHandler *handler, int size, int strategy){
             }
             break;
         case 1:
-            int min = INT_MAX;
-            int res=-1;
+            min = INT_MAX;
+            res=-1;
             while (list){
                 int dif=list->size-size;
                 if (dif>=0 && dif<min) {
@@ -328,8 +329,8 @@ int find_free_address_strategy(MemoryHandler *handler, int size, int strategy){
             return res;
             break;
         case 2:
-            int max=-1;
-            int res=-1;
+            max=-1;
+            res=-1;
             while (list){
                 if (list->size>max && list->size>=max) res=list->start;
                 list=list->next;

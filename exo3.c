@@ -192,7 +192,7 @@ void print_instruction_exp(Instruction* inst){
 void print_instruction(Instruction *inst){
     printf("%s %s", inst->mnemonic, inst->operand1);
     if (inst->operand2){
-        print(" %s",inst->operand2);
+        printf(" %s",inst->operand2);
     }
     printf("\n");
 

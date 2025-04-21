@@ -71,9 +71,9 @@ int resolve_constants(ParserResult * result){
     for(int i = 0; i<result->code_count;i++){
         Instruction * inst = result->code_instructions[i];
         if(inst->operand2){
-            search_and_replace(inst->operand2,result->memory_locations);
+            search_and_replace(&(inst->operand2),result->memory_locations);
         } else {
-            search_and_replace(inst->operand1,result->labels);
+            search_and_replace(&(inst->operand1),result->labels);
         }
     }
     return 1;
@@ -175,7 +175,7 @@ int handle_instruction(CPU *cpu, Instruction *instr, void *src, void *dest){
 }
 
 int execute_instruction(CPU *cpu, Instruction *instr){
-    
+
     void *dest = resolve_addressing(cpu,instr->operand1);
     void *src = NULL;
     if(instr->operand2){
@@ -229,7 +229,7 @@ int run_program(CPU *cpu){  //memory handler deja rempli
         scanf("%c",&val);
         if (val=='\n'){
             int e=execute_instruction(cpu,courant);
-            if (e==NULL) return 0;
+            if (!e) return 0;
             courant=fetch_next_instruction(cpu);
         }
         else if (val=='q' || val=='Q'){

@@ -55,7 +55,7 @@ exo6.o: exo6.c
 e6main: e6main.o exo6.o exo4.o exo3.o exo2.o exo1.o
 	$(CC) -o $@ $(CFLAGS) $^
 
-e4_5main.o: e6main.c
+e6main.o: e6main.c
 	gcc $(CFLAGS) -c e6main.c
 
 clean:

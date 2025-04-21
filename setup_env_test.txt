@@ -1,5 +1,8 @@
 .DATA
 x DW 42
+y DB 10
+arr DB 20,21,22,23
+z DB 9
 .CODE
 MOV AX,2 
 MOV BX,AX
