@@ -46,7 +46,7 @@ int search_and_replace(char **str, HashMap *values) {
                 strcat(new_str, substr + key_len);
 
                 // Free and update original string
-                //free(input);
+                //free(input);                                  //enlevé le free
                 *str = new_str;
                 input = new_str;
 
@@ -237,3 +237,143 @@ int run_program(CPU *cpu){  //memory handler deja rempli
     printf("\n");
     return 1;
 }
+
+void print_entire_cpu(CPU *cpu){
+    if (!cpu) {
+        printf("Error print_entire_cpu : No CPU to print");
+        return;
+    }
+    printf("\n---------- ENTIRE CPU: ----------\n\n");
+    Segment *SS= hashmap_get(cpu->memory_handler->allocated,"SS");
+    if (SS){
+    printf("*** STACK SEGMENT: [");
+    
+    for(int i = 0; i < SS->size; i++){
+        void *value = load(cpu->memory_handler, "SS", i);
+        if (value) {
+            printf("%d", *(int*)value);
+        } else {
+            printf("_");
+        }
+
+        if (i < SS->size - 1) {
+            printf(",");
+        }
+    }
+
+    printf("] *** \n\n");
+    }
+
+    Segment *DS= hashmap_get(cpu->memory_handler->allocated,"DS");
+    if (DS){
+    printf("*** DATA SEGMENT: [");
+    
+    for(int i = 0; i < DS->size; i++){
+        void *value = load(cpu->memory_handler, "DS", i);
+        if (value) {
+            printf("%d", *(int*)value);
+        } else {
+            printf("_");
+        }
+
+        if (i < DS->size - 1) {
+            printf(",");
+        }
+    }
+
+    printf("] *** \n\n");
+    }
+
+    Segment *CS= hashmap_get(cpu->memory_handler->allocated,"CS");
+    if (CS){
+    printf("*** CODE SEGMENT: [");
+    
+    for(int i = 0; i < CS->size; i++){
+        void *value = load(cpu->memory_handler, "CS", i);
+        if (value) {
+            printf("%d", *(int*)value);
+        } else {
+            printf("_");
+        }
+
+        if (i < CS->size - 1) {
+            printf(",");
+        }
+    }
+
+    printf("] *** \n\n");
+    }
+
+    Segment *ES= hashmap_get(cpu->memory_handler->allocated,"ES");
+    if (ES){
+    printf("*** EXTRA SEGMENT: [");
+    
+    for(int i = 0; i < ES->size; i++){
+        void *value = load(cpu->memory_handler, "ES", i);
+        if (value) {
+            printf("%d", *(int*)value);
+        } else {
+            printf("_");
+        }
+
+        if (i < ES->size - 1) {
+            printf(",");
+        }
+    }
+
+    printf("] *** \n\n");
+    }
+
+    printf("*** context :\n");
+    print_hashmap_int(cpu->context);
+    printf("***");
+    printf("\n---------- END OF CPU ----------\n\n");
+    
+}
+
+void print_cpu(CPU* cpu){
+    if (!cpu) {
+        printf("Error print_cpu : No CPU to print");
+        return;
+    }
+    printf("\n---------- CPU CONTENT: ----------\n\n");
+
+    Segment *DS= hashmap_get(cpu->memory_handler->allocated,"DS");
+    if (DS){
+    printf("*** DATA SEGMENT: [");
+    
+    for(int i = 0; i < DS->size; i++){
+        void *value = load(cpu->memory_handler, "DS", i);
+        if (value) {
+            printf("%d", *(int*)value);
+        } else {
+            printf("_");
+        }
+
+        if (i < DS->size - 1) {
+            printf(",");
+        }
+    }
+
+    printf("] *** \n\n");
+    }
+
+    printf("*** context :\n");
+    print_hashmap_int(cpu->context);
+    printf("***");
+
+    printf("\n---------- END OF CPU ----------\n\n");
+
+}
+
+int input(int min, int max){
+    int value=min-1;
+    while(value<min || value>max){
+    scanf("%d",&value);
+    if(value<min || value>max) printf("Error: input value out of bounds, repeat: \n") ;
+    }
+    return value;
+}
+
+   
+

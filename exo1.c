@@ -193,7 +193,7 @@ void print_hashmap_int(HashMap *map){
             printf("%s -> %d\n",map->table[i].key,*(int *)(map->table[i].value));
         }
     }
-    printf("\n");
+    
 }
 
 int* int_to_point(int value){

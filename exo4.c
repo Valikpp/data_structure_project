@@ -8,6 +8,7 @@ CPU * cpu_init(int memory_size){ //?
     
     CPU * cpu = (CPU*)malloc(sizeof(CPU));
     cpu->memory_handler = memory_init(memory_size);
+
     create_segment(cpu->memory_handler,"SS",0,128);
 
     cpu->context = hashmap_create();
@@ -220,10 +221,21 @@ void * register_indirect_addressing(CPU * cpu, const char*operand){
     return cpu->memory_handler->memory[*(int*)result];
 }
 
-void handle_MOV(CPU * cpu, void * src, void *dest){
-    if (!src || !dest) return;
-    *((int*)dest) = *((int*)src);
+void *segment_override_addressing(CPU *cpu, const char *operand){
+    char * pattern = "^\\[[(D|C|S|E)S:[A-D]X\\]$";
+    if (!matches(pattern,operand)){
+        return NULL;
+    }
+    char seg[3];
+    char regist[3];
+    sscanf(operand,"[%s:%s]",seg,regist);
+    int *vregist=(int *)hashmap_get(cpu->context,regist);
+    if (!vregist) return NULL;
+
+    return load(cpu->memory_handler,seg,*vregist);
+
 }
+
 
 CPU *setup_test_environment() {
     // Initialiser le CPU
@@ -271,6 +283,11 @@ void *resolve_addressing(CPU *cpu, const char *operand){
     return pt;
 }
 
+void handle_MOV(CPU * cpu, void * src, void *dest){
+    if (!src || !dest) return;
+    *((int*)dest) = *((int*)src);
+}
+
 int push_value(CPU *cpu, int value){ //retourne -1 et pas 0 en cas d'erreur
     int *sp=hashmap_get(cpu->context,"SP");
     if (*sp<0) return -1;
@@ -290,20 +307,6 @@ int pop_value(CPU *cpu, int* dest){ //caster le void* à l'appel?
     return 1;
 }
 
-void *segment_override_addressing(CPU *cpu, const char *operand){
-    char * pattern = "^\\[[(D|C|S|E)S:[A-D]X\\]$";
-    if (!matches(pattern,operand)){
-        return NULL;
-    }
-    char seg[3];
-    char regist[3];
-    sscanf(operand,"[%s:%s]",seg,regist);
-    int *vregist=(int *)hashmap_get(cpu->context,regist);
-    if (!vregist) return NULL;
-
-    return load(cpu->memory_handler,seg,*vregist);
-
-}
 
 int find_free_address_strategy(MemoryHandler *handler, int size, int strategy){
     Segment *list=handler->free_list;

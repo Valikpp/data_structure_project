@@ -6,11 +6,12 @@ int main(){
 
     //parser_show(parser);
     allocate_variables(cpu,parser->data_instructions,parser->data_count);
-    print_data_segment(cpu);
+    //print_data_segment(cpu);
 
-
+    //print_entire_cpu(cpu);
+    print_cpu(cpu);
     resolve_constants(parser);
-    parser_show(parser);
+    //parser_show(parser);
     
 
     //allocate_code_segment(cpu,parser->code_instructions,parser->code_count);

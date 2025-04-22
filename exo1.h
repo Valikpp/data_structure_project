@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <math.h>
 #include <limits.h>
+#include <unistd.h>  
 
 #define TABLE_SIZE 128
 #define TOMBSTONE ((void*)-1)
