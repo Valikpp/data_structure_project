@@ -1,7 +1,11 @@
 #include "exo4.h"
 
-CPU * cpu_init(int memory_size){ //?
-    if (memory_size<128) return NULL;
+CPU * cpu_init(int memory_size){ //? 
+    if (memory_size<128) {
+        printf("Error cpu_init : CPU should be initialized at a bigger size\n");
+        return NULL;
+    }
+    
     CPU * cpu = (CPU*)malloc(sizeof(CPU));
     cpu->memory_handler = memory_init(memory_size);
     create_segment(cpu->memory_handler,"SS",0,128);

@@ -1,4 +1,4 @@
-#include "exo4.h"
+#include "exo6.h"
 
 int main(){
     CPU * cpu = setup_test_environment();
