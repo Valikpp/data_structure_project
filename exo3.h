@@ -36,6 +36,8 @@ void free_parser_result(ParserResult *result);
 
 void free_memory_handler(MemoryHandler * handler);
 
+void free_instruction(Instruction *inst);
+
 void* store(MemoryHandler *handler, const char *segment_name, int pos, void *data);
 void *load(MemoryHandler *handler, const char *segment_name, int pos);
 

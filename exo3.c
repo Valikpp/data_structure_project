@@ -185,7 +185,7 @@ void free_parser_result(ParserResult *parser){
 
 
 void print_instruction_exp(Instruction* inst){
-    if (!inst) return;
+    if (inst==NULL) return;
     printf("mnemonic = %s | operand1 = %s | operand2 = %s\n",inst->mnemonic,inst->operand1, (inst->operand2)? inst->operand2 : "null");
 }
 //interrogation mark 
@@ -220,9 +220,10 @@ void parser_show(ParserResult * parser){
 }
 
 void free_instruction(Instruction *inst){
+    print_instruction(inst);
     free(inst->mnemonic);
     if (inst->operand1) free(inst->operand1);
-    if (inst->operand2) free(inst->operand2);
+    if (inst->operand2) free(inst->operand2);   
     free(inst);
 }
 

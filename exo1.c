@@ -93,8 +93,7 @@ void * hashmap_get(HashMap *map, const char * key){
         Output: NULL if key does not exist in hashmap
                 void * data in case of a successful finding
     */
-
-   if(map == NULL || key==NULL){
+    if((!map) || (!key)){
        return NULL;
     }
     int hash=simple_hash(key);

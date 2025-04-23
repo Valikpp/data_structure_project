@@ -81,6 +81,8 @@ void allocate_variables(CPU *cpu, Instruction** data_instructions,int data_count
         // printf("\n\n");
         store(cpu->memory_handler,"DS",pos,int_to_point(value));
         pos++;
+        free_instruction(data_instructions[i]);
+        data_instructions[i]=NULL;
     }
 }
 

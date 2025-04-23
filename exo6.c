@@ -198,9 +198,9 @@ int execute_instruction(CPU *cpu, Instruction *instr){
 Instruction *fetch_next_instruction(CPU *cpu){
     Segment *cs=hashmap_get(cpu->memory_handler->allocated,"CS");
     int* ip =hashmap_get(cpu->context,"IP");
-    if (ip==NULL || cs==NULL || *ip<cs->start || *ip<cs->start+cs->size) return NULL;
+    if (ip==NULL || cs==NULL || *ip>=cs->size) return NULL;
     Instruction* inst =(Instruction *) load(cpu->memory_handler,"CS",*ip);
-    (ip)++;
+    (*ip)++;
     return inst;
 }
 

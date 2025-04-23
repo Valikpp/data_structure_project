@@ -118,8 +118,6 @@ int create_segment(MemoryHandler * handler,const char *name,int start, int size)
     }
 
     // Allocation of required memory
-    handler->memory[start] = malloc(size);  
-    assert(handler->memory[start]);
 
     free(seg_libre);
     return 1;

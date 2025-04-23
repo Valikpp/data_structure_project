@@ -7,4 +7,6 @@ z DB 1
 MOV AX,2
 MOV BX,AX
 MOV CX,[x]
-MOV DX,[AX]
+loop: MOV z,6
+ADD BX,10
+end: JMP loop
