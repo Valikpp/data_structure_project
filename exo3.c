@@ -195,7 +195,8 @@ void print_instruction(Instruction *inst){
     if (inst->operand2){
         printf(" %s",inst->operand2);
     }
-    printf("\n");
+    printf(" ");
+    fflush(stdout);
 
 }
 

@@ -103,13 +103,15 @@ int handle_instruction(CPU *cpu, Instruction *instr, void *src, void *dest){
     }
     if(strcmp(mnemonic,"CMP")==0){
         int res=(*(int *)dest) - (*(int *)src);
+        int * zf = (int *)hashmap_get(cpu->context,"ZF");
+        int * sf = (int *)hashmap_get(cpu->context,"SF");
         if (res==0) {
-            int * reg_zf = (int *)hashmap_get(cpu->context,"ZF");
-            if(reg_zf) *reg_zf = 1;
+            if(zf) *zf = 1;
+
         }
         if (res<0){
-            int * reg_sf = (int *)hashmap_get(cpu->context,"SF");
-            if(reg_sf) *reg_sf = 1;
+            if(sf) *sf = 1;
+            if(zf) *zf = 0;
         }
         return 1;
     }
@@ -218,7 +220,7 @@ int run_program(CPU *cpu){  //memory handler deja rempli
        
         printf("PRESS \"ENTER\" TO EXECUTE THE NEXT INSTRUCTION : ");
         print_instruction(courant);
-        printf("OR \"q\" to QUIT EXECUTION\n ");
+        printf("OR \"Q\" to QUIT EXECUTION\n ");
         char val;
         scanf("%c",&val);
         if (val=='\n'){
@@ -237,6 +239,67 @@ int run_program(CPU *cpu){  //memory handler deja rempli
     printf("\n");
     return 1;
 }
+
+// int run_program_preview(CPU *cpu){ 
+//     printf("CPU INITIAL STATE : \n");
+//     print_cpu(cpu);
+
+//     Segment *ds=hashmap_get(cpu->memory_handler->allocated,"DS");
+//     if (!ds) return 0;
+
+//     Instruction *courant=fetch_next_instruction(cpu);
+//     while (courant){
+       
+//         printf("PRESS \"ENTER\" TO EXECUTE THE NEXT INSTRUCTION : [ ");
+//         print_instruction(courant);
+//         printf(" ] OR \"Q\" to QUIT EXECUTION\n ");
+//         char val=getchar();
+//         if (val=='\n'){
+//             int e=execute_instruction(cpu,courant);
+//             if (!e) return 0;
+//             courant=fetch_next_instruction(cpu);
+//             print_cpu(cpu);
+//         }
+//         else if (val=='q' || val=='Q'){
+//             break; 
+//         }
+//     }
+// printf("CPU FINAL STATE : \n");
+//     print_cpu(cpu);
+//     printf("\n");
+//     return 1;
+// }
+
+int run_program_preview(CPU *cpu) { 
+    printf("CPU INITIAL STATE : \n");
+    print_cpu(cpu);
+
+    Segment *ds = hashmap_get(cpu->memory_handler->allocated, "DS");
+    if (!ds) return 0;
+
+    Instruction *courant = fetch_next_instruction(cpu);
+    while (courant) {
+        printf("PRESS \"ENTER\" TO EXECUTE THE NEXT INSTRUCTION : [ ");
+        print_instruction(courant);
+        printf(" ] OR \"Q\" to QUIT EXECUTION\n ");
+
+        char input[10];
+        if (fgets(input, sizeof(input), stdin) == NULL) break;
+
+        if (input[0] == '\n') {
+            int e = execute_instruction(cpu, courant);
+            if (!e) return 0;
+            courant = fetch_next_instruction(cpu);
+            print_cpu(cpu);
+        } else if (input[0] == 'q' || input[0] == 'Q') {
+            break;
+        }
+    }
+
+    return 1;
+}
+
+    
 
 void print_entire_cpu(CPU *cpu){
     if (!cpu) {
@@ -366,30 +429,7 @@ void print_cpu(CPU* cpu){
 
 }
 
-#include <stdio.h>
 
-int input(int min, int max) {
-    int value;
-    int success;
-    char ch;
 
-    do {
-        success = scanf("%d", &value);
-
-        if (success != 1) {
-            // Invalid input: clear the buffer
-            while ((ch = getchar()) != '\n' && ch != EOF);
-            printf("Error: not a valid number. Try again.\n");
-            continue;
-        }
-
-        if (value < min || value > max) {
-            printf("Error: input value out of bounds. Try again. \n");
-        }
-
-    } while (success != 1 || value < min || value > max);
-
-    return value;
-}
-   
+  
 

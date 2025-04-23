@@ -203,7 +203,9 @@ void *memory_direct_addressing(CPU * cpu, const char*operand){
     if (value>=cpu->memory_handler->total_size || value<0){
         return NULL;
     }
-    return cpu->memory_handler->memory[value]; //load?
+
+    return load(cpu->memory_handler,"DS",value);
+
 }
 
 void * register_indirect_addressing(CPU * cpu, const char*operand){
@@ -220,7 +222,7 @@ void * register_indirect_addressing(CPU * cpu, const char*operand){
     if ((*(int*)result)>=cpu->memory_handler->total_size){
         return NULL;
     }
-    return cpu->memory_handler->memory[*(int*)result];
+    return load(cpu->memory_handler,"DS",*(int*)result);
 }
 
 void *segment_override_addressing(CPU *cpu, const char *operand){

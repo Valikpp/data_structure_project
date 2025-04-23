@@ -1,9 +1,36 @@
 #include "exo6.h"
 
 //clean terminal
-//usleep time before menu
+//usleep time before menu or press enter?
+
+int input(int min, int max) {
+    int value;
+    int success;
+    char ch;
+
+    do {
+        success = scanf("%d", &value);
+
+        if (success != 1) {
+            // Invalid input: clear the buffer
+            while ((ch = getchar()) != '\n' && ch != EOF);
+            printf("Error: not a valid number. Try again.\n");
+            continue;
+        }
+
+        if (value < min || value > max) {
+            printf("Error: input value out of bounds. Try again. \n");
+        }
+
+    } while (success != 1 || value < min || value > max);
+
+    return value;
+}
+ 
 CPU* menu1(){
-    usleep(1500000);
+    printf("\n[Press Enter to continue...]\n\n");
+    while (getchar() != '\n');
+    printf("\033[2J\033[H"); 
     printf("\nSelect an option (1-2): \n");
     printf("╔════════════════════════════╗\n");
     printf("║    CPU SIMULATOR MENU      ║\n");
@@ -28,11 +55,15 @@ CPU* menu1(){
 
     CPU* cpu= cpu_init(ipt);
     if (!cpu) menu1();
+    printf("\n CPU of size %d successfully initialized \n",ipt);
+    usleep(1500000);
     return cpu;
 }
 
 ParserResult* menu2(CPU* cpu){
-    usleep(1500000);
+    printf("\n[Press Enter to continue...]\n\n");
+    while (getchar() != '\n');
+    printf("\033[2J\033[H"); 
     printf("\nSelect an option (1-3): \n");
     printf("╔════════════════════════════╗\n");
     printf("║    CPU SIMULATOR MENU      ║\n");
@@ -79,7 +110,9 @@ ParserResult* menu2(CPU* cpu){
 }
 
 void menu3(CPU* cpu, ParserResult* parser){
-    usleep(1500000);
+    
+    
+    printf("\033[2J\033[H"); 
     printf("\nSelect an option (1-5): \n");
     printf("╔═══════════════════════════════════════════════════════════╗\n");
     printf("║                    CPU SIMULATOR MENU                     ║\n");
@@ -146,7 +179,9 @@ void menu3(CPU* cpu, ParserResult* parser){
 }
 
 void menucs(CPU* cpu, ParserResult* parser){
-    usleep(1500000);
+    printf("\n[Press Enter to continue...]\n\n");
+    while (getchar() != '\n');
+    printf("\033[2J\033[H"); 
     printf("\nSelect an option (1-5): \n");
     printf("╔═══════════════════════════════════════════════════════════╗\n");
     printf("║                    CPU SIMULATOR MENU                     ║\n");
@@ -203,7 +238,9 @@ void menucs(CPU* cpu, ParserResult* parser){
 }
 
 void menuds(CPU* cpu, ParserResult* parser){
-    usleep(1500000);
+    printf("\n[Press Enter to continue...]\n\n");
+    while (getchar() != '\n');
+    printf("\033[2J\033[H"); 
     printf("\nSelect an option (1-5): \n");
     printf("╔═══════════════════════════════════════════════════════════╗\n");
     printf("║                    CPU SIMULATOR MENU                     ║\n");
@@ -256,7 +293,9 @@ void menuds(CPU* cpu, ParserResult* parser){
 
 
 int menu4(CPU* cpu, ParserResult* parser){
-    usleep(1500000);
+    printf("\n[Press Enter to continue...]\n\n");
+    while (getchar() != '\n');
+    printf("\033[2J\033[H"); 
     printf("\nSelect an option (1-5): \n");
     printf("╔═══════════════════════════════════════════════════════════╗\n");
     printf("║                    CPU SIMULATOR MENU                     ║\n");
@@ -272,7 +311,7 @@ int menu4(CPU* cpu, ParserResult* parser){
 
     switch(ipt){
         case 1:
-            if(run_program(cpu)==0){
+            if(run_program_preview(cpu)==0){
                 printf("Error Running Program, Aborted.\n");
                 return 0;
 
@@ -308,7 +347,9 @@ int menu4(CPU* cpu, ParserResult* parser){
 }
 
 int menu5(CPU* cpu, ParserResult* parser){
-    usleep(1500000);
+    printf("\n[Press Enter to continue...]\n\n");
+    while (getchar() != '\n');
+    printf("\033[2J\033[H"); 
     printf("\nSelect an option (1-4): \n");
     printf("╔═══════════════════════════════════════════════════════════╗\n");
     printf("║                    CPU SIMULATOR MENU                     ║\n");
@@ -356,8 +397,6 @@ int menu5(CPU* cpu, ParserResult* parser){
 int main(){
 
     printf("\nWelcome to the CPU simulator !\n");
-    printf("[Press Enter to continue...]\n\n");
-    while (getchar() != '\n'); 
     usleep(200000);
 
     while (1){

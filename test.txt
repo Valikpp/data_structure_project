@@ -1,0 +1,14 @@
+.DATA
+a DW 1
+b DB 2
+arr DB 3,4,5,6
+c DB 7
+d DB 8
+e DW 9
+.CODE
+MOV AX b
+MOV BX [2]
+loop: ADD CX BX
+ADD DX 1
+CMP AX DX
+JNZ loop

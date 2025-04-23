@@ -13,5 +13,5 @@ Instruction *fetch_next_instruction(CPU *cpu);
 int run_program(CPU *cpu);
 void print_entire_cpu(CPU* cpu);
 void print_cpu(CPU *cpu);
-int input(int min, int max);
+int run_program_preview(CPU *cpu);
 #endif
