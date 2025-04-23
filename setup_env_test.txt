@@ -9,4 +9,4 @@ MOV BX,AX
 MOV CX,[x]
 loop: MOV z,6
 ADD BX,10
-end: JMP loop
+end: loop

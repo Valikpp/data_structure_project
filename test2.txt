@@ -1,0 +1,28 @@
+.DATA
+a DW 1
+b DB 2
+arr DB 3,4,5,6
+c DB 7
+d DB 8
+e DW 9
+.CODE
+MOV AX [AX]
+MOV BX AX
+JMP third
+first: MOV BX 2 
+ALLOC
+JNZ second
+second: MOV [ES:CX],53
+MOV [ES:AX],10
+MOV [DS:AX],36
+FREE
+HALT
+third: PUSH 5
+PUSH 4
+PUSH 3
+PUSH 2
+PUSH
+POP DX
+POP CX
+POP
+JMP first

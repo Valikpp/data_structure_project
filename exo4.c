@@ -54,7 +54,7 @@ void allocate_variables(CPU *cpu, Instruction** data_instructions,int data_count
         //indice sur buffer 
         int buff_ind = 0;
         //printf("--------Instruction---------:\n");
-        //print_instruction_exp(data_instructions[i]);
+        //print_instruction(data_instructions[i]);
         //printf("--------Parsed values---------:\n");
         while (operand2[k]!='\0')
         {
@@ -123,7 +123,7 @@ void preview_allocate_variables(CPU *cpu, Instruction** data_instructions,int da
         //indice sur buffer 
         int buff_ind = 0;
         printf("--------Instruction---------:\n");
-        print_instruction_exp(data_instructions[i]);
+        print_instruction(data_instructions[i]);
         printf("--------Parsed values---------:\n");
         while (operand2[k]!='\0')
         {
@@ -226,7 +226,7 @@ void * register_indirect_addressing(CPU * cpu, const char*operand){
 }
 
 void *segment_override_addressing(CPU *cpu, const char *operand){
-    char * pattern = "^\\[[(D|C|S|E)S:[A-D]X\\]$";
+    char * pattern = "^\\[(D|C|S|E)S:[A-D]X\\]$";
     if (!matches(pattern,operand)){
         return NULL;
     }
@@ -279,6 +279,7 @@ CPU *setup_test_environment() {
 }
 
 void *resolve_addressing(CPU *cpu, const char *operand){
+    if (!operand) return NULL;
     void *pt=immediate_addressing(cpu,operand);
     if (!pt) pt=register_addressing(cpu, operand);
     if (!pt) pt=memory_direct_addressing(cpu, operand);
@@ -294,7 +295,7 @@ void handle_MOV(CPU * cpu, void * src, void *dest){
 
 int push_value(CPU *cpu, int value){ //retourne -1 et pas 0 en cas d'erreur
     int *sp=hashmap_get(cpu->context,"SP");
-    if (*sp<0) return -1;
+    if (!sp || (*sp)<0) return -1;
     void* s=store(cpu->memory_handler,"SS",*sp,int_to_point(value));
     if (!s) return -1;
     (*sp)--;
@@ -353,7 +354,11 @@ int find_free_address_strategy(MemoryHandler *handler, int size, int strategy){
 int alloc_es_segment(CPU* cpu){
     int* ax=hashmap_get(cpu->context,"AX");
     int *bx=hashmap_get(cpu->context,"BX");
-    if (!(*bx==0) || (*bx==1)|| (*bx==2)  ) return 0;
+    if (!((*bx==0) || (*bx==1)|| (*bx==2) ) ){
+        printf("Error alloc_es_segment : register BX not properly set to an allocating strategy. Set to 0, 1 or 2\n ");
+        usleep(1300000);
+     return 0;   
+    } 
      int *zf=hashmap_get(cpu->context,"ZF");
     int start=find_free_address_strategy(cpu->memory_handler,*ax,*bx);
     if ((start)==-1 ) { 

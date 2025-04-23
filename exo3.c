@@ -78,6 +78,13 @@ Instruction *parse_code_instruction(const char *line, HashMap *labels, int code_
 
 
 ParserResult *parse(const char *filename){
+
+    int len = strlen(filename);
+    if (!(len >= 4 || strcmp(filename + len - 4, ".txt") == 0)){
+        printf("Error parse : File name in wrong format. Enter a file name with .txt extension \n");
+        return NULL;
+    }
+
     //On cree un parser
     ParserResult *parser=(ParserResult *)malloc(sizeof(ParserResult));
     assert(parser);
@@ -89,6 +96,10 @@ ParserResult *parse(const char *filename){
    
 
     FILE *F=fopen(filename,"r");
+    if (F==NULL){
+        printf("Error parse : file not found / error opening file \n");
+        return NULL;
+    }
     char buffer[256];
     char* lect=fgets(buffer,256,F);
     assert(lect);
@@ -183,17 +194,17 @@ void free_parser_result(ParserResult *parser){
 }
 
 
-
-void print_instruction_exp(Instruction* inst){
-    if (inst==NULL) return;
-    printf("mnemonic = %s | operand1 = %s | operand2 = %s\n",inst->mnemonic,inst->operand1, (inst->operand2)? inst->operand2 : "null");
-}
-//interrogation mark 
-
 void print_instruction(Instruction *inst){
-    printf("%s %s", inst->mnemonic, inst->operand1);
-    if (inst->operand2){
-        printf(" %s",inst->operand2);
+    if (!inst){
+        printf("Error print_instruction : no instruction found\n");
+        return;
+    }
+    printf("%s ", inst->mnemonic);
+    if (inst->operand1){
+        printf("%s ",inst->operand1);
+        if (inst->operand2){
+            printf("%s ",inst->operand2);
+    }
     }
     printf(" ");
     fflush(stdout);
@@ -201,20 +212,21 @@ void print_instruction(Instruction *inst){
 }
 
 
-
 void parser_show(ParserResult * parser){
     printf("====== PARSER CONTENT ======\n\n");
     printf("______ .DATA instructions ______\n\n");
     for (int i = 0; i<parser->data_count;i++){
-        print_instruction_exp(parser->data_instructions[i]);
+        print_instruction(parser->data_instructions[i]);
+        printf("\n");
     }
     printf("\n --- memory locations ---\n");
     print_hashmap_int(parser->memory_locations);
     printf("\n______ .CODE instructions ______\n\n");
     for (int i = 0; i<parser->code_count;i++){
-        print_instruction_exp(parser->code_instructions[i]);
+        print_instruction(parser->code_instructions[i]);
+        printf("\n");
     }
-    printf("\n --- labels ---\n\n ");
+    printf("\n--- labels ---\n\n");
     print_hashmap_int(parser->labels);
 
     printf("====== END OF PARSER CONTENT ======\n\n");
@@ -289,6 +301,9 @@ void* store(MemoryHandler *handler, const char *segment_name, int pos, void *dat
 
 void *load(MemoryHandler *handler, const char *segment_name, int pos){
     Segment *seg=(Segment *)hashmap_get(handler->allocated,segment_name);
-    if (!seg || (pos >= seg->size)) return NULL;
+    if (!seg || (pos >= seg->size)) {
+        printf("Segmentation fault load : value out of bounds");
+        return NULL;
+    }
     return (handler->memory[seg->start+pos]);
 }

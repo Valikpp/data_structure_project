@@ -6,8 +6,8 @@ c DB 7
 d DB 8
 e DW 9
 .CODE
-MOV AX b
-MOV BX [2]
+MOV AX d
+MOV BX [b]
 loop: ADD CX BX
 ADD DX 1
 CMP AX DX

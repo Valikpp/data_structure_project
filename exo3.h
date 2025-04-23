@@ -26,8 +26,6 @@ Instruction *parse_code_instruction(const char *line,HashMap *labels, int code_c
 
 ParserResult *parse(const char *filename);
 
-void print_instruction_exp(Instruction* inst);
-
 void print_instruction(Instruction *inst);
 
 void parser_show(ParserResult * parser);

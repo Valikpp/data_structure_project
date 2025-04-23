@@ -1,7 +1,7 @@
 #include "exo6.h"
 
 //clean terminal
-//usleep time before menu or press enter?
+//usleep time before menu or press ENTER?
 
 int input(int min, int max) {
     int value;
@@ -28,7 +28,7 @@ int input(int min, int max) {
 }
  
 CPU* menu1(){
-    printf("\n[Press Enter to continue...]\n\n");
+    printf("\n-------[Press ENTER to continue...]-------\n\n");
     while (getchar() != '\n');
     printf("\033[2J\033[H"); 
     printf("\nSelect an option (1-2): \n");
@@ -61,7 +61,9 @@ CPU* menu1(){
 }
 
 ParserResult* menu2(CPU* cpu){
-    printf("\n[Press Enter to continue...]\n\n");
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF); 
+    printf("\n-------[Press ENTER to continue...]-------\n\n");
     while (getchar() != '\n');
     printf("\033[2J\033[H"); 
     printf("\nSelect an option (1-3): \n");
@@ -77,17 +79,19 @@ ParserResult* menu2(CPU* cpu){
 
     switch(ipt){
         case 1:
-            printf("Enter your file name with .txt extension \n  (pseudo-assembly program with .DATA and .CODE sections) \n");
+            printf("\nENTER your file name with .txt extension \n  (pseudo-assembly program with .DATA and .CODE sections) \n");
             char filename[100];
             scanf("%s", filename);
             int len = strlen(filename);
-            if (!(len >= 4 && strcmp(filename + len - 4, ".txt") == 0)){
-                printf("File name in wrong format.\n");
+            if (!(len >= 4 || strcmp(filename + len - 4, ".txt") == 0)){
+                printf("File name in wrong format. ENTER a file name with .txt extension \n");
+                usleep(1300000);
                 menu2(cpu);
             }
             ParserResult * parser=parse(filename);
             if (!parser) {
-                printf("Error parsing.");
+                printf("Error parsing.\n");
+                usleep(2600000);
                 menu2(cpu);
             }
             
@@ -102,7 +106,6 @@ ParserResult* menu2(CPU* cpu){
         case 3:
             printf("Exiting simulator. Goodbye!\n\n");
             cpu_destroy(cpu);
-            free_parser_result(parser);
             usleep(1300000);
             exit(0); 
     }
@@ -110,10 +113,12 @@ ParserResult* menu2(CPU* cpu){
 }
 
 void menu3(CPU* cpu, ParserResult* parser){
-    
-    
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF); 
+    printf("\n-------[Press ENTER to continue...]-------\n\n");
+    while (getchar() != '\n');
     printf("\033[2J\033[H"); 
-    printf("\nSelect an option (1-5): \n");
+    printf("\nSelect an option (1-6): \n");
     printf("╔═══════════════════════════════════════════════════════════╗\n");
     printf("║                    CPU SIMULATOR MENU                     ║\n");
     printf("╠═══════════════════════════════════════════════════════════╣\n");
@@ -125,7 +130,7 @@ void menu3(CPU* cpu, ParserResult* parser){
     printf("║ 6. Exit                                                   ║\n");
     printf("╚═══════════════════════════════════════════════════════════╝\n");
     printf("\n");
-    int ipt=input(1,5);
+    int ipt=input(1,6);
     
     switch(ipt){
         case 1:
@@ -179,7 +184,9 @@ void menu3(CPU* cpu, ParserResult* parser){
 }
 
 void menucs(CPU* cpu, ParserResult* parser){
-    printf("\n[Press Enter to continue...]\n\n");
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF); 
+    printf("\n-------[Press ENTER to continue...]-------\n\n");
     while (getchar() != '\n');
     printf("\033[2J\033[H"); 
     printf("\nSelect an option (1-5): \n");
@@ -238,7 +245,9 @@ void menucs(CPU* cpu, ParserResult* parser){
 }
 
 void menuds(CPU* cpu, ParserResult* parser){
-    printf("\n[Press Enter to continue...]\n\n");
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF); 
+    printf("\n-------[Press ENTER to continue...]-------\n\n");
     while (getchar() != '\n');
     printf("\033[2J\033[H"); 
     printf("\nSelect an option (1-5): \n");
@@ -293,7 +302,9 @@ void menuds(CPU* cpu, ParserResult* parser){
 
 
 int menu4(CPU* cpu, ParserResult* parser){
-    printf("\n[Press Enter to continue...]\n\n");
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF); 
+    printf("\n-------[Press ENTER to continue...]-------\n\n");
     while (getchar() != '\n');
     printf("\033[2J\033[H"); 
     printf("\nSelect an option (1-5): \n");
@@ -311,6 +322,8 @@ int menu4(CPU* cpu, ParserResult* parser){
 
     switch(ipt){
         case 1:
+            usleep(1300000);
+            printf("\033[2J\033[H");
             if(run_program_preview(cpu)==0){
                 printf("Error Running Program, Aborted.\n");
                 return 0;
@@ -347,7 +360,9 @@ int menu4(CPU* cpu, ParserResult* parser){
 }
 
 int menu5(CPU* cpu, ParserResult* parser){
-    printf("\n[Press Enter to continue...]\n\n");
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF); 
+    printf("\n-------[Press ENTER to continue...]-------\n\n");
     while (getchar() != '\n');
     printf("\033[2J\033[H"); 
     printf("\nSelect an option (1-4): \n");
@@ -396,10 +411,10 @@ int menu5(CPU* cpu, ParserResult* parser){
 
 int main(){
 
+    while (1){
     printf("\nWelcome to the CPU simulator !\n");
     usleep(200000);
 
-    while (1){
     CPU *cpu=menu1();
 
     ParserResult* parser=menu2(cpu);
@@ -426,6 +441,9 @@ int main(){
             menu5(cpu,parser);
         }
     }
+
+    if (cpu) cpu_destroy(cpu);
+    if (parser) free_parser_result(parser);
 
     }
 

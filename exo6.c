@@ -74,7 +74,13 @@ int resolve_constants(ParserResult * result){
             search_and_replace(&(inst->operand2),result->memory_locations);
             search_and_replace(&(inst->operand1),result->memory_locations);
         }else{
-            search_and_replace(&(inst->operand1),result->labels);
+            if(inst->operand1){
+                int succ=search_and_replace(&(inst->operand1),result->labels);
+                if (!succ && strcmp(inst->mnemonic,"PUSH") && strcmp(inst->mnemonic,"POP")) {
+                    printf("Error resolve_constants : invalid address with mnemonic %s \n",inst->mnemonic);
+                    return 0;
+                }
+            }
         } 
         
     }
@@ -117,18 +123,14 @@ int handle_instruction(CPU *cpu, Instruction *instr, void *src, void *dest){
     }
     if(strcmp(mnemonic,"JMP")==0){
         int * reg_ip = (int *)hashmap_get(cpu->context,"IP");
-        int value;
-        sscanf(instr->operand1,"%d",&value);
-        *reg_ip = value;
+        *reg_ip =*(int *)src;
         return 1;
     }
     if(strcmp(mnemonic,"JZ")==0){
         int * reg_zf = (int *)hashmap_get(cpu->context,"ZF");
         if(*reg_zf==1){
             int * reg_ip = (int *)hashmap_get(cpu->context,"IP");
-            int value;
-            sscanf(instr->operand1,"%d",&value);
-            *reg_ip = value;
+            *reg_ip = *(int *)src;
         }
         return 1;
     }
@@ -136,9 +138,7 @@ int handle_instruction(CPU *cpu, Instruction *instr, void *src, void *dest){
         int * reg_zf = (int *)hashmap_get(cpu->context,"ZF");
         if(*reg_zf==0){
             int * reg_ip = (int *)hashmap_get(cpu->context,"IP");
-            int value;
-            sscanf(instr->operand1,"%d",&value);
-            *reg_ip = value;
+            *reg_ip = *(int *)src;
         }
         return 1;
     }
@@ -151,16 +151,16 @@ int handle_instruction(CPU *cpu, Instruction *instr, void *src, void *dest){
     }
     if(strcmp(mnemonic,"PUSH")==0){
         int *reg;
-        if (src) reg=hashmap_get(cpu->context,src);
-        else  reg=hashmap_get(cpu->context,"AX");
+        if (src) reg=src;
+        else reg=hashmap_get(cpu->context,"AX");
         int p=push_value(cpu,*reg);
         if (p!=-1) return 1;
     }
 
     if(strcmp(mnemonic,"POP")==0){
         int *reg;
-        if (dest) reg=hashmap_get(cpu->context,dest);
-        else  reg=hashmap_get(cpu->context,"AX");
+        if (dest) reg=dest;
+        else reg=hashmap_get(cpu->context,"AX");
         int p=pop_value(cpu,reg);
         if (p!=-1) return 1;
     }
@@ -276,17 +276,19 @@ int run_program_preview(CPU *cpu) {
 
     Segment *ds = hashmap_get(cpu->memory_handler->allocated, "DS");
     if (!ds) return 0;
-
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF); 
     Instruction *courant = fetch_next_instruction(cpu);
     while (courant) {
         printf("PRESS \"ENTER\" TO EXECUTE THE NEXT INSTRUCTION : [ ");
         print_instruction(courant);
-        printf(" ] OR \"Q\" to QUIT EXECUTION\n ");
+        printf("] OR \"Q\" to QUIT EXECUTION\n ");
 
         char input[10];
         if (fgets(input, sizeof(input), stdin) == NULL) break;
 
         if (input[0] == '\n') {
+            printf("\033[2J\033[H");
             int e = execute_instruction(cpu, courant);
             if (!e) return 0;
             courant = fetch_next_instruction(cpu);
@@ -354,7 +356,7 @@ void print_entire_cpu(CPU *cpu){
     for(int i = 0; i < CS->size; i++){
         void *value = load(cpu->memory_handler, "CS", i);
         if (value) {
-            printf("%d", *(int*)value);
+            print_instruction((Instruction *)value);
         } else {
             printf("_");
         }
