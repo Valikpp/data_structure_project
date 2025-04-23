@@ -1,18 +1,17 @@
 #include "exo6.h"
 
-int main(){
-
-    printf("Welcome to your CPU simulator !\n");
-    printf("[Press Enter to continue...]\n\n");
-    while (getchar() != '\n'); 
-    usleep(400000);
-    printf("Select an option (1-2): \n");
+//clean terminal
+//usleep time before menu
+CPU* menu1(){
+    usleep(1500000);
+    printf("\nSelect an option (1-2): \n");
     printf("╔════════════════════════════╗\n");
     printf("║    CPU SIMULATOR MENU      ║\n");
     printf("╠════════════════════════════╣\n");
     printf("║ 1. Initialize CPU          ║\n");
     printf("║ 2. Exit                    ║\n");
     printf("╚════════════════════════════╝\n");
+    printf("\n");
     int ipt=input(1,2);
     
     switch(ipt){
@@ -20,51 +19,376 @@ int main(){
             break;
         case 2:
             printf("Exiting simulator. Goodbye!\n\n");
-            usleep(1700000);
+            usleep(1300000);
             exit(0); 
     }
     usleep(500000);
-    printf("Select CPU memory size (128-1024): \n");
+    printf("\n Select CPU memory size (128-1024): \n");
     ipt=input(128,1024);
 
-    cpu_init(ipt);
+    CPU* cpu= cpu_init(ipt);
+    if (!cpu) menu1();
+    return cpu;
+}
 
-    printf("Select an option (1-2): \n");
+ParserResult* menu2(CPU* cpu){
+    usleep(1500000);
+    printf("\nSelect an option (1-3): \n");
     printf("╔════════════════════════════╗\n");
     printf("║    CPU SIMULATOR MENU      ║\n");
     printf("╠════════════════════════════╣\n");
     printf("║ 1. Parse .txt file         ║\n");
     printf("║ 2. Show CPU                ║\n");
-    printf("║ 3. Allocate Extra Segment  ║\n");
-    printf("║ 4. Exit                    ║\n");
+    printf("║ 3. Exit                    ║\n");
     printf("╚════════════════════════════╝\n");
-    int ipt=input(1,4);
+    printf("\n");
+    int ipt=input(1,3);
 
     switch(ipt){
         case 1:
-            printf("Select CPU memory size (128-1024): \n");
-            //scanf le .txt
-            //appelle la fct
-            //dmd si il veut voir le parser 
-
+            printf("Enter your file name with .txt extension \n  (pseudo-assembly program with .DATA and .CODE sections) \n");
+            char filename[100];
+            scanf("%s", filename);
+            int len = strlen(filename);
+            if (!(len >= 4 && strcmp(filename + len - 4, ".txt") == 0)){
+                printf("File name in wrong format.\n");
+                menu2(cpu);
+            }
+            ParserResult * parser=parse(filename);
+            if (!parser) {
+                printf("Error parsing.");
+                menu2(cpu);
+            }
+            
+            return parser;
+            break;
+        
+        case 2:
+            print_cpu(cpu);
+            printf("\n");
             break;
 
-            
-        case 4:
+        case 3:
             printf("Exiting simulator. Goodbye!\n\n");
-            usleep(1700000);
+            cpu_destroy(cpu);
+            free_parser_result(parser);
+            usleep(1300000);
             exit(0); 
     }
-    usleep(500000);
-    printf("Select CPU memory size (128-1024): \n");
-    ipt=input(128,1024);
+    return NULL;
+}
+
+void menu3(CPU* cpu, ParserResult* parser){
+    usleep(1500000);
+    printf("\nSelect an option (1-5): \n");
+    printf("╔═══════════════════════════════════════════════════════════╗\n");
+    printf("║                    CPU SIMULATOR MENU                     ║\n");
+    printf("╠═══════════════════════════════════════════════════════════╣\n");
+    printf("║ 1. Allocate Variables (Data Segment)                      ║\n");
+    printf("║ 2. Allocate Code Segment                                  ║\n");
+    printf("║ 3. Show Parser                                            ║\n");
+    printf("║ 4. Show CPU                                               ║\n");
+    printf("║ 5. Show Entire CPU (with Code, Stack, and Extra Segments) ║\n");
+    printf("║ 6. Exit                                                   ║\n");
+    printf("╚═══════════════════════════════════════════════════════════╝\n");
+    printf("\n");
+    int ipt=input(1,5);
+    
+    switch(ipt){
+        case 1:
+            {Segment *DS=hashmap_get(cpu->memory_handler->allocated,"DS");
+            if (DS){
+               printf("Variables already allocated.\n"); 
+               menu3(cpu,parser);
+            }else{
+            allocate_variables(cpu,parser->data_instructions,parser->data_count);
+            }
+            break;
+            }
+        case 2:
+            {
+            if (resolve_constants(parser)==0) {
+                 printf("Error resolving constants in parser for code allocation.\n");
+                 menu3(cpu,parser);
+                 break;
+            }
+            Segment *CS=hashmap_get(cpu->memory_handler->allocated,"CS");
+            if (CS){
+               printf("Code segment already allocated.\n"); 
+               menu3(cpu,parser);
+            }else{
+                allocate_code_segment(cpu,parser->code_instructions,parser->code_count);
+            }
+            break;
+            }
+        case 3:
+            parser_show(parser);
+            printf("\n");
+            break;
+
+        case 4:
+            print_cpu(cpu);
+            printf("\n");
+            break;
+
+        case 5:
+            print_entire_cpu(cpu);
+            printf("\n");
+            break;
+
+        case 6:
+            printf("Exiting simulator. Goodbye!\n\n");
+            cpu_destroy(cpu);
+            free_parser_result(parser);
+            usleep(1300000);
+            exit(0); 
+    }
+}
+
+void menucs(CPU* cpu, ParserResult* parser){
+    usleep(1500000);
+    printf("\nSelect an option (1-5): \n");
+    printf("╔═══════════════════════════════════════════════════════════╗\n");
+    printf("║                    CPU SIMULATOR MENU                     ║\n");
+    printf("╠═══════════════════════════════════════════════════════════╣\n");
+    printf("║ 1. Allocate Code Segment                                  ║\n");
+    printf("║ 2. Show Parser                                            ║\n");
+    printf("║ 3. Show CPU                                               ║\n");
+    printf("║ 4. Show Entire CPU (with Code, Stack, and Extra Segments) ║\n");
+    printf("║ 5. Exit                                                   ║\n");
+    printf("╚═══════════════════════════════════════════════════════════╝\n");
+    printf("\n");
+    int ipt=input(1,5);
+    
+    switch(ipt){
+        case 1:
+            {
+            if (resolve_constants(parser)==0) {
+                 printf("Error resolving constants in parser for code allocation.\n");
+                 menu3(cpu,parser);
+                 break;
+            }
+            Segment *CS=hashmap_get(cpu->memory_handler->allocated,"CS");
+            if (CS){
+               printf("Code segment already allocated.\n"); 
+               menu3(cpu,parser);
+            }else{
+                allocate_code_segment(cpu,parser->code_instructions,parser->code_count);
+            }
+            break;
+            }
+            
+        case 2:
+            parser_show(parser);
+            printf("\n");
+            break;
+
+        case 3:
+            print_cpu(cpu);
+            printf("\n");
+            break;
+
+        case 4:
+            print_entire_cpu(cpu);
+            printf("\n");
+            break;
+
+        case 5:
+            printf("Exiting simulator. Goodbye!\n\n");
+            cpu_destroy(cpu);
+            free_parser_result(parser);
+            usleep(1300000);
+            exit(0); 
+    }
+}
+
+void menuds(CPU* cpu, ParserResult* parser){
+    usleep(1500000);
+    printf("\nSelect an option (1-5): \n");
+    printf("╔═══════════════════════════════════════════════════════════╗\n");
+    printf("║                    CPU SIMULATOR MENU                     ║\n");
+    printf("╠═══════════════════════════════════════════════════════════╣\n");
+    printf("║ 1. Allocate Data Segment                                  ║\n");
+    printf("║ 2. Show Parser                                            ║\n");
+    printf("║ 3. Show CPU                                               ║\n");
+    printf("║ 4. Show Entire CPU (with Code, Stack, and Extra Segments) ║\n");
+    printf("║ 5. Exit                                                   ║\n");
+    printf("╚═══════════════════════════════════════════════════════════╝\n");
+    printf("\n");
+    int ipt=input(1,5);
+    
+    switch(ipt){
+        case 1:
+            {Segment *DS=hashmap_get(cpu->memory_handler->allocated,"DS");
+            if (DS){
+               printf("Variables already allocated.\n"); 
+               menu3(cpu,parser);
+            }else{
+            allocate_variables(cpu,parser->data_instructions,parser->data_count);
+            }
+            break;
+            }
+            
+        case 2:
+            parser_show(parser);
+            printf("\n");
+            break;
+
+        case 3:
+            print_cpu(cpu);
+            printf("\n");
+            break;
+
+        case 4:
+            print_entire_cpu(cpu);
+            printf("\n");
+            break;
+
+        case 5:
+            printf("Exiting simulator. Goodbye!\n\n");
+            cpu_destroy(cpu);
+            free_parser_result(parser);
+            usleep(1300000);
+            exit(0); 
+    }
+}
+
+
+
+int menu4(CPU* cpu, ParserResult* parser){
+    usleep(1500000);
+    printf("\nSelect an option (1-5): \n");
+    printf("╔═══════════════════════════════════════════════════════════╗\n");
+    printf("║                    CPU SIMULATOR MENU                     ║\n");
+    printf("╠═══════════════════════════════════════════════════════════╣\n");
+    printf("║ 1. RUN PROGRAM                                            ║\n");
+    printf("║ 2. Show Parser                                            ║\n");
+    printf("║ 3. Show CPU                                               ║\n");
+    printf("║ 4. Show Entire CPU (with Code, Stack, and Extra Segments) ║\n");
+    printf("║ 5. Exit                                                   ║\n");
+    printf("╚═══════════════════════════════════════════════════════════╝\n");
+    printf("\n");
+    int ipt=input(1,5);
+
+    switch(ipt){
+        case 1:
+            if(run_program(cpu)==0){
+                printf("Error Running Program, Aborted.\n");
+                return 0;
+
+            }
+            return 1;
+            break;
+            
+            
+        case 2:
+            parser_show(parser);
+            printf("\n");
+            break;
+
+        case 3:
+            print_cpu(cpu);
+            printf("\n");
+            break;
+
+        case 4:
+            print_entire_cpu(cpu);
+            printf("\n");
+            break;
+
+        case 5:
+            printf("Exiting simulator. Goodbye!\n\n");
+            cpu_destroy(cpu);
+            free_parser_result(parser);
+            usleep(1300000);
+            exit(0); 
+    }
+    return 1;
+
+}
+
+int menu5(CPU* cpu, ParserResult* parser){
+    usleep(1500000);
+    printf("\nSelect an option (1-4): \n");
+    printf("╔═══════════════════════════════════════════════════════════╗\n");
+    printf("║                    CPU SIMULATOR MENU                     ║\n");
+    printf("╠═══════════════════════════════════════════════════════════╣\n");
+    printf("║ 1. Show Parser                                            ║\n");
+    printf("║ 2. Show CPU                                               ║\n");
+    printf("║ 3. Show Entire CPU (with Code, Stack, and Extra Segments) ║\n");
+    printf("║ 4. Exit                                                   ║\n");
+    printf("╚═══════════════════════════════════════════════════════════╝\n");
+    printf("\n");
+    int ipt=input(1,4);
+
+    switch(ipt){
+            
+        case 1:
+            parser_show(parser);
+            printf("\n");
+            break;
+
+        case 2:
+            print_cpu(cpu);
+            printf("\n");
+            break;
+
+        case 3:
+            print_entire_cpu(cpu);
+            printf("\n");
+            break;
+
+        case 4:
+            printf("\nThank you for using the CPU Simulator!\n");
+            printf("Hope to see you again soon. Goodbye! \n");
+            cpu_destroy(cpu);
+            free_parser_result(parser);
+            usleep(1300000);
+            exit(0); 
+    }
+    return 1;
+
+}
 
 
 
 
+int main(){
 
+    printf("\nWelcome to the CPU simulator !\n");
+    printf("[Press Enter to continue...]\n\n");
+    while (getchar() != '\n'); 
+    usleep(200000);
 
+    while (1){
+    CPU *cpu=menu1();
 
+    ParserResult* parser=menu2(cpu);
+
+    while (!parser){
+        parser=menu2(cpu);
+    }
+
+    while(hashmap_get(cpu->memory_handler->allocated,"DS")==NULL &&
+    hashmap_get(cpu->memory_handler->allocated,"CS")==NULL){
+        menu3(cpu,parser);
+    }
+
+    while(hashmap_get(cpu->memory_handler->allocated,"DS")==NULL) {
+    menuds(cpu,parser);
+    }
+
+    while(hashmap_get(cpu->memory_handler->allocated,"CS")==NULL) {
+    menucs(cpu,parser);
+    }
+
+    if (menu4(cpu,parser)){
+        while(1){
+            menu5(cpu,parser);
+        }
+    }
+
+    }
 
     return 0;
 

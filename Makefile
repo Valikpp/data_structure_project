@@ -58,5 +58,11 @@ e6main: e6main.o exo6.o exo4.o exo3.o exo2.o exo1.o
 e6main.o: e6main.c
 	gcc $(CFLAGS) -c e6main.c
 
+maincpu: maincpu.o exo6.o exo4.o exo3.o exo2.o exo1.o
+	$(CC) -o $@ $(CFLAGS) $^
+
+maincpu.o: maincpu.c
+	gcc $(CFLAGS) -c maincpu.c
+
 clean:
 	rm -f *.o *~ $(PROGRAMS)

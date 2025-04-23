@@ -82,7 +82,7 @@ int resolve_constants(ParserResult * result){
 }
 
 void allocate_code_segment(CPU *cpu, Instruction **code_instructions, int code_count){
-    int start = cpu->memory_handler->free_list->start;
+    int start = find_free_address_strategy(cpu->memory_handler,code_count,1);
     create_segment(cpu->memory_handler,"CS",start,code_count);
     for (int i=0;i<code_count;i++){
         store(cpu->memory_handler,"CS",i,code_instructions[i]);
@@ -366,14 +366,30 @@ void print_cpu(CPU* cpu){
 
 }
 
-int input(int min, int max){
-    int value=min-1;
-    while(value<min || value>max){
-    scanf("%d",&value);
-    if(value<min || value>max) printf("Error: input value out of bounds, repeat: \n") ;
-    }
+#include <stdio.h>
+
+int input(int min, int max) {
+    int value;
+    int success;
+    char ch;
+
+    do {
+        success = scanf("%d", &value);
+
+        if (success != 1) {
+            // Invalid input: clear the buffer
+            while ((ch = getchar()) != '\n' && ch != EOF);
+            printf("Error: not a valid number. Try again.\n");
+            continue;
+        }
+
+        if (value < min || value > max) {
+            printf("Error: input value out of bounds. Try again. \n");
+        }
+
+    } while (success != 1 || value < min || value > max);
+
     return value;
 }
-
    
 
