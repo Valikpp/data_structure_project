@@ -13,7 +13,7 @@ first: MOV BX 2
 ALLOC
 JNZ second
 second: MOV [ES:CX],53
-MOV [ES:AX],10
+MOV [ES:DX],10
 MOV [DS:AX],36
 FREE
 HALT

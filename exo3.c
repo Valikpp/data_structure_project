@@ -3,13 +3,26 @@
 int nb_data_occ = 0;
 
 Instruction *parse_data_instruction(const char * line, HashMap *memory_locations){
+    /*
+        .DATA instructions parsing function: 
+        Parses an instruction of type .DATA from the original file into instruction type for the programme
+        
+        Input: 
+            char * line -- line of .DATA in pseudo-assembler (Ex: x DW 47)
+            HashMap * memory_locations -- hashmap containing pair (variable_name <-> position_in_memory) 
+        Output: Instruction * inst (Ex: inst->mnemonic = x, inst->operand1 = DW, inst->operand2 = 47)
+    */
+    //global counter of .DATA instructions
     static int nb_occ = 0;
     char mnemonic[256];
     char operand1[256];
     char operand2[256];
+    
+    // scanning of initial line
     sscanf(line,"%s %s %s", mnemonic, operand1, operand2);
     int i = 0;
     int count = 1;
+    // arrays treatment 
     while(operand2[i]!='\0'){
         if (operand2[i]==','){
             count++;
@@ -20,6 +33,7 @@ Instruction *parse_data_instruction(const char * line, HashMap *memory_locations
     inst->mnemonic = strdup(mnemonic);
     inst->operand1 = strdup(operand1);
     inst->operand2 = strdup(operand2);
+    // saving position in memory
     int * value = malloc(sizeof(int));
     *value = nb_occ;
     hashmap_insert(memory_locations,mnemonic,value);
@@ -29,48 +43,78 @@ Instruction *parse_data_instruction(const char * line, HashMap *memory_locations
 }
 
 Instruction *parse_code_instruction(const char *line, HashMap *labels, int code_count) {
+    /*
+        .CODE instructions parsing function: 
+        Parses an instruction of type .CODE from the original file into instruction type for the programme
+        
+        Input: 
+            char * line -- line of .CODE in pseudo-assembler (Ex: MOV AX [0])
+            HashMap * labels -- hashmap containing pair (special label <-> line in programme) (Ex: loop <-> 5) 
+        Output: Instruction * inst (Ex: inst->mnemonic = MOV, inst->operand1 = AX, inst->operand2 = [0])
+    */
+
+    // Create a buffer to copy the input line for safe tokenization
     char buffer[256];
     strncpy(buffer, line, 255);
-    buffer[255] = '\0';
+    buffer[255] = '\0'; // Ensure null termination
 
+    // Initialize pointers for label, mnemonic, and operands
     char *label = NULL;
     char *mnemonic = NULL;
     char *operand1 = NULL;
     char *operand2 = NULL;
 
+    // Get the first token (could be a label or mnemonic)
     char *token = strtok(buffer, " ");
     if (!token) return NULL;
 
+    // Check if the token contains a colon (i.e., it's a label)
     char *colon = strchr(token, ':');
     if (colon) {
-        *colon = '\0';
-        label = token;
-        token = strtok(NULL, " ");
-    }
+        // Check if it's NOT part of a [bracketed] operand like [ES:AX]
+        char *open_bracket = strchr(token, '[');
+        char *close_bracket = strchr(token, ']');
 
-    if (!token) return NULL;
-    mnemonic = token;
+        int colon_inside_brackets = (open_bracket && close_bracket &&
+                                    open_bracket < colon && colon < close_bracket);
 
-    token = strtok(NULL, " ,");
-    if (token) {
-        operand1 = token;
-        token = strtok(NULL, " ,");
-        if (token) {
-            operand2 = token;
+        if (!colon_inside_brackets) {
+            *colon = '\0';
+            label = token;
+            token = strtok(NULL, " ");
         }
     }
 
-    Instruction *inst = (Instruction *)malloc(sizeof(Instruction));
-    inst->mnemonic = strdup(mnemonic);
-    inst->operand1 = operand1 ? strdup(operand1) : NULL;
-    inst->operand2 = operand2 ? strdup(operand2) : NULL;
+    // If there's no mnemonic after label (or to begin with), return NULL
+    if (!token) return NULL;
+    mnemonic = token; // Save the mnemonic (instruction name)
 
-    if (label) {
-        int *code_c = malloc(sizeof(int));
-        *code_c = code_count;
-        hashmap_insert(labels, label, code_c);
+    // Try to get first operand (if any)
+    token = strtok(NULL, " ,");
+    if (token) {
+        operand1 = token; // Save first operand
+
+        // Try to get second operand (if any)
+        token = strtok(NULL, " ,");
+        if (token) {
+            operand2 = token; // Save second operand
+        }
     }
 
+    // Allocate memory for the Instruction structure
+    Instruction *inst = (Instruction *)malloc(sizeof(Instruction));
+    inst->mnemonic = strdup(mnemonic);                // Copy mnemonic string
+    inst->operand1 = operand1 ? strdup(operand1) : NULL; // Copy operand1 if it exists
+    inst->operand2 = operand2 ? strdup(operand2) : NULL; // Copy operand2 if it exists
+
+    // If a label was found, insert it into the label hashmap with current code count
+    if (label) {
+        int *code_c = malloc(sizeof(int)); // Allocate memory for code count
+        *code_c = code_count;              // Store the current instruction index
+        hashmap_insert(labels, label, code_c); // Add label to the hashmap
+    }
+
+    // Return the constructed instruction
     return inst;
 }
 
@@ -78,14 +122,25 @@ Instruction *parse_code_instruction(const char *line, HashMap *labels, int code_
 
 
 ParserResult *parse(const char *filename){
-
+    /*
+        Initial file parsing function: 
+        Parses all instructions from the original file into instructions type for the programme and store them in parser_result object
+        
+        Input: 
+            char * filename -- name of original file in pseudo-assembler  
+        Output: ParserResult * parser -- an object of type ParserResult keeping:
+                    1) all parsed .DATA and .CODE instructions
+                    2) number of .DATA and .CODE instructions
+                    3) Hashmap of pairs (variable_name <-> memory_position)
+                    4) Hashmap of special labels (label <-> line in code)
+    */
     int len = strlen(filename);
     if (!(len >= 4 || strcmp(filename + len - 4, ".txt") == 0)){
         printf("Error parse : File name in wrong format. Enter a file name with .txt extension \n");
         return NULL;
     }
 
-    //On cree un parser
+    //Parser creation
     ParserResult *parser=(ParserResult *)malloc(sizeof(ParserResult));
     assert(parser);
     parser->data_instructions=(Instruction **)malloc(sizeof(Instruction *)*NBMININST);
@@ -107,19 +162,18 @@ ParserResult *parse(const char *filename){
         buffer[strlen(buffer)-1] = '\0';
     }
     assert(strcmp(buffer,".DATA")==0);
-
-    //Taille du tableau contenant les instructions .DATA   
+   
     int tailledata=NBMININST;
-    //Compteur des instructions dans .DATA
+    // .DATA instruction counter
     int nbdata=0;
     lect=fgets(buffer,256,F);
     if( buffer[strlen(buffer)-1] == '\n'){
         buffer[strlen(buffer)-1] = '\0';
     }
     while((strcmp(buffer,".CODE")!=0) && (lect!=NULL)){
-        //Si le nombre d'instruction dépasse la taille du tableau
+        //To many instructions
         if (nbdata>=tailledata){
-            //On double la taille du tableau
+            // double table size
             tailledata*=2;
             Instruction **tmp = realloc(parser->data_instructions, tailledata);
             assert(tmp);
@@ -135,22 +189,23 @@ ParserResult *parse(const char *filename){
         }
     }
     parser->data_count=nbdata;
-    //il existe une section code ??
+    
+    // .CODE part exists?
 
     assert(lect);
 
-    //Taille du tableau contenant les instructions .CODE  
+    //.CODE instructions table  
     int taillecode=NBMININST;
-    //Compteur des instructions dans .CODE
+    // .CODE instructions counter
     int nbcode=0;
     lect=fgets(buffer,256,F);
     if( buffer[strlen(buffer)-1] == '\n'){
         buffer[strlen(buffer)-1] = '\0';
     }
     while(lect!=NULL && strcmp(lect,"\0")!=0){
-        //Si le nombre d'instruction dépasse la taille du tableau
+        //To many instructions
         if (nbcode>=taillecode){
-            //On double la taille du tableau
+            // double table size
             taillecode*=2;
             Instruction **tmp = realloc(parser->code_instructions, taillecode);
             assert(tmp);
@@ -172,29 +227,33 @@ ParserResult *parse(const char *filename){
 
 
 void free_parser_result(ParserResult *parser){
-    // for(int i = 0; i<parser->data_count;i++){
-    //     Instruction* inst = parser->data_instructions[i];
-    //     free(inst->mnemonic);
-    //     free(inst->operand1);
-    //     if (inst->operand2) free(inst->operand2);
-    //     free(inst);
-    // }
+    /*
+        ParserResult object clearing
+        Clears all dynamic memory allocated by ParserResult
+
+        Input: 
+            ParserResult * parser -- object of type ParserResult
+    */
+
+    /*
+        IMPORTANT: 
+            This function does not free .DATA instructions because this operation will be treated during allocate_variables 
+            
+            This function does not free .CODE instructions because this operation will be treated during CPU_destruction
+    */
     free(parser->data_instructions);
-    // for(int i = 0; i<parser->code_count;i++){
-    //     Instruction* inst = parser->code_instructions[i];
-    //     free(inst->mnemonic);
-    //     free(inst->operand1);
-    //     if (inst->operand2) free(inst->operand2);
-    //     free(inst);
-    // }
     free(parser->code_instructions);
     hashmap_destroy(parser->memory_locations);
     hashmap_destroy(parser->labels);
     free(parser);
+    parser = NULL;
 }
 
 
 void print_instruction(Instruction *inst){
+    /*
+        Utility function showing all instruction's defined attributes
+    */
     if (!inst){
         printf("Error print_instruction : no instruction found\n");
         return;
@@ -213,6 +272,9 @@ void print_instruction(Instruction *inst){
 
 
 void parser_show(ParserResult * parser){
+    /*
+        Utility function showing a entire ParserResult content
+    */
     printf("====== PARSER CONTENT ======\n\n");
     printf("______ .DATA instructions ______\n\n");
     for (int i = 0; i<parser->data_count;i++){
@@ -233,7 +295,9 @@ void parser_show(ParserResult * parser){
 }
 
 void free_instruction(Instruction *inst){
-    print_instruction(inst);
+    /*
+        Utility function clearing dynamic memory allocated by Instruction object
+    */
     free(inst->mnemonic);
     if (inst->operand1) free(inst->operand1);
     if (inst->operand2) free(inst->operand2);   
@@ -249,6 +313,7 @@ void free_memory_handler(MemoryHandler * handler){
         Output: NULL
     */
 
+    // Data segment clearing
     Segment* data_segment = hashmap_get(handler->allocated, "DS");
     if (data_segment) {
         for (int i = 0; i < data_segment->size; i++) {
@@ -256,19 +321,22 @@ void free_memory_handler(MemoryHandler * handler){
         }
     }
 
+    //Code segment clearing
     Segment* code_segment = hashmap_get(handler->allocated, "CS");
     if (code_segment) {
         for (int i = 0; i < code_segment->size; i++) {
+            // .CODE instructions clearing
             free_instruction(load(handler,"CS",i));
         }
     }
-
+    //Extra-segment clearing
     Segment* extra_segment = hashmap_get(handler->allocated, "ES");
     if (extra_segment) {
         for (int i = 0; i < extra_segment->size; i++) {
             free(load(handler,"ES",i));
         }
     }
+    //Stack-segment clearing
     Segment* stack_segment = hashmap_get(handler->allocated, "SS");
 	if (stack_segment) {
 		for (int i = 0; i < stack_segment->size; i++) {
@@ -290,6 +358,18 @@ void free_memory_handler(MemoryHandler * handler){
 }
 
 void* store(MemoryHandler *handler, const char *segment_name, int pos, void *data){
+    /*
+        Save to memory function
+        The function storing a data at desired position of segment
+        Input: 
+            MemoryHandler * handler -- initialized memory handler of CPU
+            char * segment_name -- name of desired segment
+            int pos -- position in segment (!!! RELATIONAL PARAMETER !!!)
+            void * data -- data to save at segment[pos]
+        Output: 
+            data in case of success
+            NULL in case of error
+    */
     Segment *seg=(Segment *)hashmap_get(handler->allocated,segment_name);
     if (!seg || (pos >= seg->size)) return NULL;
   
@@ -300,9 +380,24 @@ void* store(MemoryHandler *handler, const char *segment_name, int pos, void *dat
 }
 
 void *load(MemoryHandler *handler, const char *segment_name, int pos){
+    /*
+        Load from memory function
+        The function loading a data from desired position of segment
+        Input: 
+            MemoryHandler * handler -- initialized memory handler of CPU
+            char * segment_name -- name of desired segment
+            int pos -- position in segment (!!! RELATIONAL PARAMETER !!!)
+        Output: 
+            data in case of success
+            NULL in case of error
+    */
     Segment *seg=(Segment *)hashmap_get(handler->allocated,segment_name);
-    if (!seg || (pos >= seg->size)) {
-        printf("Segmentation fault load : value out of bounds");
+    if(!seg){
+        printf("Segmentation fault load : segment with name <%s> does not exist",segment_name);
+        return NULL;
+    }
+    if ((pos >= seg->size)) {
+        printf("Segmentation fault load : value out of bounds %d\n",pos);
         return NULL;
     }
     return (handler->memory[seg->start+pos]);

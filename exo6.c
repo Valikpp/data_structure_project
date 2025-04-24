@@ -46,7 +46,7 @@ int search_and_replace(char **str, HashMap *values) {
                 strcat(new_str, substr + key_len);
 
                 // Free and update original string
-                //free(input);                                  //enlevé le free
+                free(input);                                  //enlevé le free
                 *str = new_str;
                 input = new_str;
 
@@ -146,7 +146,7 @@ int handle_instruction(CPU *cpu, Instruction *instr, void *src, void *dest){
         Segment * cs = (Segment *)hashmap_get(cpu->memory_handler->allocated,"CS");
         if (!cs) return 0;
         int * reg_ip = (int *)hashmap_get(cpu->context,"IP");
-        *reg_ip=cs->size-1;
+        *reg_ip=cs->size;
         return 1;
     }
     if(strcmp(mnemonic,"PUSH")==0){
@@ -215,7 +215,6 @@ int run_program(CPU *cpu){  //memory handler deja rempli
     if (!ds) return 0;
 
     Instruction *courant=fetch_next_instruction(cpu);
-    printf("pas d'instructions\n");
     while (courant){
        
         printf("PRESS \"ENTER\" TO EXECUTE THE NEXT INSTRUCTION : ");

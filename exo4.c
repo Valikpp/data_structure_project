@@ -1,6 +1,16 @@
 #include "exo4.h"
 
-CPU * cpu_init(int memory_size){ //? 
+CPU * cpu_init(int memory_size){
+    /*
+        CPU initialization
+        Initializes a object of type CPU with memory of desired size
+        
+        Input:
+            int memory_size -- desired memory size (128 and more bytes)
+        Output:
+            CPU * cpu 
+    */
+    
     if (memory_size<128) {
         printf("Error cpu_init : CPU should be initialized at a bigger size\n");
         return NULL;
@@ -11,6 +21,7 @@ CPU * cpu_init(int memory_size){ //?
 
     create_segment(cpu->memory_handler,"SS",0,128);
 
+    // registers initialization
     cpu->context = hashmap_create();
     hashmap_insert(cpu->context, "AX", int_to_point(0));
     hashmap_insert(cpu->context, "BX", int_to_point(0));
@@ -32,30 +43,44 @@ CPU * cpu_init(int memory_size){ //?
 }
 
 void cpu_destroy(CPU *cpu){
+    /*
+        CPU destruction 
+        The function clearing dynamic memory allocated by CPU
+        
+        Input:
+            CPU * cpu -- CPU type object
+    */
     free_memory_handler(cpu->memory_handler);
     hashmap_destroy(cpu->context);
     hashmap_destroy(cpu->constant_pool);
     free(cpu);
+    cpu=NULL;
 }
 
 
 
 void allocate_variables(CPU *cpu, Instruction** data_instructions,int data_count){
-    // nb_data_occ -- external variable qui contient la taille de l'espace necessaire au stockage des variables  
+    /*
+        Variables allocation
+        The function creates a segment for Data and for every instruction of .DATA stores a value of variable in memory of CPU
+        
+        Input:
+            CPU * cpu -- initialized CPU
+            Instruction** data_instructions -- ParserResult->data_instructions object, list of .DATA instructions
+            int data_count -- ParserResult->data_count
+    */    
+    // nb_data_occ -- external variable which contains the size of the space required to store the variables
     create_segment(cpu->memory_handler,"DS",cpu->memory_handler->free_list->start,nb_data_occ);
 
-    //indice dans la memoire de CPU
+    //index in memory of CPU
     int pos=0;
     for(int i = 0; i<data_count;i++){
         char * operand2 = data_instructions[i]->operand2;
-        //indice general sur la chaine
+        //general index for char *
         int k = 0;
         char buffer[100];
-        //indice sur buffer 
+        //index in buffer
         int buff_ind = 0;
-        //printf("--------Instruction---------:\n");
-        //print_instruction(data_instructions[i]);
-        //printf("--------Parsed values---------:\n");
         while (operand2[k]!='\0')
         {
             if (operand2[k]==','){
@@ -63,8 +88,7 @@ void allocate_variables(CPU *cpu, Instruction** data_instructions,int data_count
                 int value;
                 sscanf(buffer," %d ",&value);
                 store(cpu->memory_handler,"DS",pos,int_to_point(value));
-                //printf("memory[%d] = %d \n",pos,value);
-                // valeur de buffer est recureperee, on remet a vide (en rangeant l'indice)
+                // buffer value is overwritten, reset to empty (by putting the index away)
                 buffer[0] = '\0';
                 buff_ind = 0;
                 pos++;
@@ -77,8 +101,6 @@ void allocate_variables(CPU *cpu, Instruction** data_instructions,int data_count
         buffer[buff_ind] = '\0';
         int value;
         sscanf(buffer," %d ",&value);
-        // printf("memory[%d] = %d ",pos,value);
-        // printf("\n\n");
         store(cpu->memory_handler,"DS",pos,int_to_point(value));
         pos++;
         free_instruction(data_instructions[i]);
@@ -87,6 +109,15 @@ void allocate_variables(CPU *cpu, Instruction** data_instructions,int data_count
 }
 
 void print_data_segment(CPU * cpu){
+    /*
+        Data segment's values printing
+        The function prints all data of Data Segment stored in CPU memory
+        
+        Input:
+            CPU * cpu -- initialized CPU
+
+        "_" respresents an uninitialized case (Ex: Data Segment = [1,2,3,4,_,_,_])
+    */  
     Segment * segment = (Segment*)hashmap_get(cpu->memory_handler->allocated,"DS");
     if(!segment) return;
     printf("==== Content of data segment <DS> ====\nDS = [");
@@ -108,53 +139,13 @@ void print_data_segment(CPU * cpu){
     printf("=== END of data segment <DS> ===\n \n");
 }
 
-
-void preview_allocate_variables(CPU *cpu, Instruction** data_instructions,int data_count){
-    // nb_data_occ -- external variable qui contient la taille de l'espace necessaire au stockage des variables  
-    create_segment(cpu->memory_handler,"DS",cpu->memory_handler->free_list->start,nb_data_occ);
-
-    //indice dans la memoire de CPU
-    int pos=0;
-    for(int i = 0; i<data_count;i++){
-        char * operand2 = data_instructions[i]->operand2;
-        //indice general sur la chaine
-        int k = 0;
-        char buffer[20];
-        //indice sur buffer 
-        int buff_ind = 0;
-        printf("--------Instruction---------:\n");
-        print_instruction(data_instructions[i]);
-        printf("--------Parsed values---------:\n");
-        while (operand2[k]!='\0')
-        {
-            if (operand2[k]==','){
-                buffer[buff_ind] = '\0';
-                int value;
-                sscanf(buffer," %d ",&value);
-                //store(cpu->memory_handler,"DS",pos,int_to_point(value));
-                printf("memory[%d] = %d \n",pos,value);
-                // valeur de buffer est recuperee, on remet a vide (en rangeant l'indice)
-                buffer[0] = '\0';
-                buff_ind = 0;
-                pos++;
-            } else {
-                buffer[buff_ind] = operand2[k];
-                buff_ind++;
-            }
-            k++;
-        }
-        buffer[buff_ind] = '\0';
-        int value;
-        sscanf(buffer," %d ",&value);
-        printf("memory[%d] = %d ",pos,value);
-        printf("\n\n");
-        //store(cpu->memory_handler,"DS",pos,int_to_point(value));
-        pos++;
-    }
-}
-
-
 int matches(const char *pattern, const char *string) {
+    /*
+        Utility function matching a string with regex pattern
+        Output:
+            1 in case of match
+            0 in other case
+    */  
     regex_t regex;
     int result = regcomp(&regex, pattern, REG_EXTENDED);
     if (result) {
@@ -167,7 +158,11 @@ int matches(const char *pattern, const char *string) {
 }
 
 void * immediate_addressing(CPU * cpu, const char * operand){
-    char * pattern = "^[0-9]+$";
+    /*
+        Immediate addressing treatment
+        Matches operand with immediate addressing pattern and updates pool of constants
+    */ 
+    char * pattern = "^[0-9]+$"; // string containing an integer
     if (!matches(pattern,operand)){
         return NULL;
     }
@@ -183,7 +178,11 @@ void * immediate_addressing(CPU * cpu, const char * operand){
 }
 
 void *register_addressing(CPU * cpu, const char*operand){
-    char * pattern = "^[A-D]X$";
+    /*
+        Register addressing treatment
+        Matches operand with register addressing pattern and returns a value of required register
+    */ 
+    char * pattern = "^[A-D]X$"; // Character between A and D + X
     if (!matches(pattern,operand)){
         return NULL;
     }
@@ -194,7 +193,11 @@ void *register_addressing(CPU * cpu, const char*operand){
 }
 
 void *memory_direct_addressing(CPU * cpu, const char*operand){
-    char * pattern = "^\\[[0-9]+\\]$";
+    /*
+        Memory direct addressing treatment
+        Matches operand with memory direct addressing pattern and returns a value saved in cpu's memory at required position
+    */ 
+    char * pattern = "^\\[[0-9]+\\]$"; //integer in []
     if (!matches(pattern,operand)){
         return NULL;
     }
@@ -209,10 +212,16 @@ void *memory_direct_addressing(CPU * cpu, const char*operand){
 }
 
 void * register_indirect_addressing(CPU * cpu, const char*operand){
-    char * pattern = "^\\[[A-D]X\\]$";
+    /*
+        Register indirect addressing treatment
+        Matches operand with register indirect addressing pattern and returns a value saved in cpu's memory at position contained in required register
+        Ex: [AX] -> value stored in AX-position in memory
+    */ 
+    char * pattern = "^\\[[A-D]X\\]$"; // Character between A and D + X in []
     if (!matches(pattern,operand)){
         return NULL;
     }
+    // Treatment by substring to avoid copy errors
     char * regist = (char*)malloc(sizeof(char)*3);
     strncpy(regist,operand+1,2); 
     regist[2] = '\0';
@@ -226,30 +235,45 @@ void * register_indirect_addressing(CPU * cpu, const char*operand){
 }
 
 void *segment_override_addressing(CPU *cpu, const char *operand){
-    char * pattern = "^\\[(D|C|S|E)S:[A-D]X\\]$";
+    /*
+        Explicit segment register indirect addressing treatment
+        Matches operand with pattern and returns a value saved in cpu's memory in explicit segment at position contained in required register
+        MOV [ES:AX],10 -> AX-position in ES
+    */ 
+    char * pattern = "^\\[(D|C|S|E)S:[A-D]X\\]$"; // ((on of char from D,C,S,E)+S):(Character between A and D + X) in []
     if (!matches(pattern,operand)){
         return NULL;
     }
-    char seg[3];
-    char regist[3];
-    sscanf(operand,"[%s:%s]",seg,regist);
-    int *vregist=(int *)hashmap_get(cpu->context,regist);
-    if (!vregist) return NULL;
 
-    return load(cpu->memory_handler,seg,*vregist);
+    char *reg1 = (char*)malloc(sizeof(char) * 3); // For "ES"
+    char *reg2 = (char*)malloc(sizeof(char) * 3); // For "AX"
+
+    strncpy(reg1, operand + 1, 2); // Skip the '[' and copy 2 chars
+    reg1[2] = '\0';
+
+    strncpy(reg2, operand + 4, 2); // Skip past '[XX:' (4 chars total)
+    reg2[2] = '\0';
+    int *vregist=(int *)hashmap_get(cpu->context,reg2);
+    if (!vregist) return NULL;
+    void * result = load(cpu->memory_handler,reg1,*vregist);
+    free(reg1);
+    free(reg2);
+    return result;
 
 }
 
 
 CPU *setup_test_environment() {
-    // Initialiser le CPU
+    /*
+        Setup test environment for tests in exo5.7
+    */
     CPU *cpu = cpu_init(1024);
     if (!cpu) {
         printf("Error: CPU initialization failed\n");
         return NULL;
     }
 
-    // Initialiser les registres avec des valeurs spécifiques
+    // Initialise registers with specific values
     int *ax = (int *)hashmap_get(cpu->context, "AX");
     int *bx = (int *)hashmap_get(cpu->context, "BX");
     int *cx = (int *)hashmap_get(cpu->context, "CX");
@@ -279,16 +303,41 @@ CPU *setup_test_environment() {
 }
 
 void *resolve_addressing(CPU *cpu, const char *operand){
+    /*
+        Function applies the appropriate type of addressing to the operand
+        Input:
+            CPU * cpu -- initialized CPU
+            char * operand -- operand to treat
+        Output:
+            void * pt -- pointer to required memory case
+    */
     if (!operand) return NULL;
     void *pt=immediate_addressing(cpu,operand);
-    if (!pt) pt=register_addressing(cpu, operand);
-    if (!pt) pt=memory_direct_addressing(cpu, operand);
-    if (!pt) pt=register_indirect_addressing(cpu, operand);
-    if (!pt) pt=segment_override_addressing(cpu,operand);
+    if (!pt){
+        pt=register_addressing(cpu, operand);
+    }
+    if (!pt){
+        pt=memory_direct_addressing(cpu, operand);
+    }
+    if (!pt){
+        pt=register_indirect_addressing(cpu, operand);
+    }
+    if (!pt){
+        pt=segment_override_addressing(cpu,operand);
+    }
     return pt;
 }
 
 void handle_MOV(CPU * cpu, void * src, void *dest){
+    /*
+        The function handles MOV operation by replacing dest value by src value
+        Input:
+            CPU * cpu -- initialized CPU
+            void * src -- source pointer
+            void * dest -- source pointer
+        Output:
+            NULL
+    */
     if (!src || !dest) return;
     *((int*)dest) = *((int*)src);
 }
@@ -359,7 +408,7 @@ int alloc_es_segment(CPU* cpu){
         usleep(1300000);
      return 0;   
     } 
-     int *zf=hashmap_get(cpu->context,"ZF");
+    int *zf=hashmap_get(cpu->context,"ZF");
     int start=find_free_address_strategy(cpu->memory_handler,*ax,*bx);
     if ((start)==-1 ) { 
     *zf=1;

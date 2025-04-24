@@ -21,7 +21,7 @@ Segment* find_free_segment(MemoryHandler* handler, int start, int size, Segment 
 
 int create_segment(MemoryHandler * handler,const char *name,int start, int size);
 
-void afficher_liste_libre(MemoryHandler *handler);
+void print_free_list(MemoryHandler *handler);
 
 int remove_segment(MemoryHandler * handler, const char *name);
 

@@ -120,6 +120,7 @@ int create_segment(MemoryHandler * handler,const char *name,int start, int size)
     // Allocation of required memory
 
     free(seg_libre);
+    seg_libre = NULL;
     return 1;
 }
 
@@ -191,15 +192,18 @@ int remove_segment(MemoryHandler * handler, const char *name){
 
     }
     free(aliberer);
-
+    aliberer = NULL;
     return 1;
 }
 
 
 //Function out of task to check the work of create_segment
-void afficher_liste_libre(MemoryHandler *handler){
+void print_free_list(MemoryHandler *handler){
+    /*
+        Utility function showing a list of free segments
+    */
     Segment * tmp = handler->free_list;
-    printf("Liste de segments : ");
+    printf("List of segments : ");
     while(tmp){
         printf("[%d, %d],",tmp->start, tmp->size);
         tmp = tmp->next;

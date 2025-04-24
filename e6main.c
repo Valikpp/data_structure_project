@@ -2,7 +2,7 @@
 
 int main(){
     CPU * cpu = cpu_init(1024);
-    ParserResult * parser = parse("setup_env_test.txt");
+    ParserResult * parser = parse("test2.txt");
 
     printf("\n===========Parser after file scanning==============\n");
     parser_show(parser);

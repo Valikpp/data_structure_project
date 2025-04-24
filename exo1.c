@@ -4,8 +4,9 @@ unsigned long simple_hash(const char *str){
     /*
         Hashing function for string keys based on ASCII encoding value 
         
-        Input: string str
-        Output: int index
+        Input: char * str
+        Output: int index in case of success
+                -1 if str is not defined
     */
     int i = 0;
     int cle = 0;
@@ -23,7 +24,7 @@ unsigned long simple_hash(const char *str){
 
 HashMap *hashmap_create(){
     /*
-        Hashmap creation function: allocates dynamicly a hashmap of size TABLE_SIZE,
+        Hashmap creation function: allocates dynamically a hashmap of size TABLE_SIZE,
         Initialises all cases by NULL
         
         Input: NULL
@@ -48,9 +49,9 @@ int hashmap_insert(HashMap *map, const char* key, void* value){
         
         Input: 
             HashMap *map -- pointer to initialized hashmap struct
-            const string key -- key of inserted data
+            const char * key -- key of inserted data
             void * data -- pointer to indefined type value
-            PREREQUISITE: void * data is a DYNAMICLY allocated pointer () 
+            PREREQUISITE: void * data is a DYNAMICALLY allocated pointer () 
         Output: 0 in case the table is full
                 i+1 in case of successful assignment to cell i
     */
@@ -89,7 +90,7 @@ void * hashmap_get(HashMap *map, const char * key){
             The function searches for a cell with a specified key and returns its value
         Input:
             HashMap *map -- pointer to initialized hashmap struct
-            const string key -- key of removed data
+            const char * key -- key of removed data
         Output: NULL if key does not exist in hashmap
                 void * data in case of a successful finding
     */
@@ -103,7 +104,7 @@ void * hashmap_get(HashMap *map, const char * key){
     //on parcours jusqua trouver une case vide
 
     while (cle_courante){
-        if(strcmp(cle_courante,key)==0){
+        if(cle_courante!=TOMBSTONE && strcmp(cle_courante,key)==0){
             return (map->table[indice]).value;
         }
         i++;
@@ -119,12 +120,12 @@ void * hashmap_get(HashMap *map, const char * key){
 
 int hashmap_remove(HashMap *map,const char *key){
     /*
-        Hashmap insertion function: 
+        Hashmap removing function: 
         Delete value function: Deletes the value with the specified key (without clearing memory)
         
         Input: 
             HashMap *map -- pointer to initialized hashmap struct
-            const string key -- key of removed data 
+            const char * key -- key of removed data 
         Output: 0 if key does not exist in hashmap
                 1 in case of successful deletion
     */
@@ -162,14 +163,18 @@ void hashmap_destroy(HashMap *map){
         //If cell is not empty
         if((map->table[i]).key!=TOMBSTONE){
             free((map->table[i]).key);
+            (map->table[i]).key = NULL;
             free((map->table[i]).value);
+            (map->table[i]).value = NULL;
         //Cell is empty
         } else {
             map->table[i].key = NULL;
         }
     }
     free(map->table);
+    map->table = NULL;
     free(map);
+    map = NULL;
 }
 
 void hashmap_show_keys(HashMap *map){
@@ -201,16 +206,3 @@ int* int_to_point(int value){
     *val = value;
     return val;
 }
-
-
-    //map->table[indice].value = malloc(sizeof(value));
-
-    // On recopie la valeur dans la table de hashage pour eviter les modification de valeur a l'interieur de la table
-    /* SINON 
-    value = a
-    hashmap_insert(key,value);
-    value = b
-    hashmap_get(key) -> b 
-    PAS LOGIQUE POUR UTILISATION, on veut recevoir "a"
-    */
-    //memcpy(map->table[indice].value,value,sizeof(value));
