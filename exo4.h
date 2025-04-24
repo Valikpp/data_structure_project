@@ -15,7 +15,6 @@ void cpu_destroy(CPU *cpu);
 
 void allocate_variables(CPU *cpu, Instruction** data_instructions,int data_count);
 void print_data_segment(CPU * cpu);
-void preview_allocate_variables(CPU *cpu, Instruction** data_instructions,int data_count);
 
 int matches(const char *pattern, const char *string);
 void * immediate_addressing(CPU * cpu, const char * operand);

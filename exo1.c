@@ -1,6 +1,10 @@
 #include "exo1.h"
 
 unsigned long simple_hash(const char *str){
+    if (str==NULL){
+        printf("Error simple_hash : no key to hash\n");
+        return -1;
+    }
     /*
         Hashing function for string keys based on ASCII encoding value 
         
@@ -51,13 +55,26 @@ int hashmap_insert(HashMap *map, const char* key, void* value){
             HashMap *map -- pointer to initialized hashmap struct
             const char * key -- key of inserted data
             void * data -- pointer to indefined type value
-            PREREQUISITE: void * data is a DYNAMICALLY allocated pointer () 
-        Output: 0 in case the table is full
+            PREREQUISITE: void * data is a DYNAMICLY allocated pointer () 
+                Output: 0 in case the table is full
                 i+1 in case of successful assignment to cell i
     */
 
+    if (map==NULL){
+        printf("Error hashmap_insert : no hashmap to insert\n");
+        return 0;
+    }
+
+    if (key==NULL){
+        printf("Error hashmap_insert : no key to insert in hashmap\n");
+        return 0;
+    }
     // Hash(key)
     int hash=simple_hash(key);
+    if (hash==-1){
+         printf("Error hashmap_insert : hash key out of bounds \n");
+         return 0;
+    }
     int i = 0;
 
     // Iterator restricted to TABLE_SIZE
@@ -94,10 +111,21 @@ void * hashmap_get(HashMap *map, const char * key){
         Output: NULL if key does not exist in hashmap
                 void * data in case of a successful finding
     */
-    if((!map) || (!key)){
-       return NULL;
+
+    if (map==NULL){
+        printf("Error hashmap_get : no hashmap to look in \n");
+        return 0;
+    }
+
+    if (key==NULL){
+        printf("Error hashmap_get : no key to look for in hashmap\n");
+        return 0;
     }
     int hash=simple_hash(key);
+    if (hash==-1){
+         printf("Error hashmap_get : hash key out of bounds \n");
+         return NULL;
+    }
     int i = 0;
     int indice = (hash+i)%TABLE_SIZE;
     char * cle_courante = map->table[indice].key;
@@ -129,6 +157,17 @@ int hashmap_remove(HashMap *map,const char *key){
         Output: 0 if key does not exist in hashmap
                 1 in case of successful deletion
     */
+
+    if (map==NULL){
+        printf("Error hashmap_remove : no hashmap to remove from \n");
+        return 0;
+    }
+
+    if (key==NULL){
+        printf("Error hashmap_remove : no key to remove from hashmap\n");
+        return 0;
+    }
+
     int hash=simple_hash(key);
     int i = 0;
     int indice = (hash+i)%TABLE_SIZE;
@@ -159,6 +198,11 @@ void hashmap_destroy(HashMap *map){
         Input: HashMap* map
         Output: NULL
     */
+
+    if (map==NULL) {
+        printf("Error hashmap_destroy : no hashmap to destroy\n");
+        return;
+    }
     for(int i = 0;i<TABLE_SIZE;i++){
         //If cell is not empty
         if((map->table[i]).key!=TOMBSTONE){
@@ -174,24 +218,20 @@ void hashmap_destroy(HashMap *map){
     free(map->table);
     map->table = NULL;
     free(map);
-    map = NULL;
 }
 
-void hashmap_show_keys(HashMap *map){
-    /*
-        Utility function showing hashmap keys
-    */
-    for(int i = 0;i<TABLE_SIZE;i++){
-        if(((map->table[i]).key!=TOMBSTONE) && ((map->table[i]).key!=NULL)){
-            printf("%s\n",map->table[i].key);
-        }
-    }
-}
+
 void print_hashmap_int(HashMap *map){
     /*
         Utility function showing hashmap with integer values
         ATTENTION: Other type of values cause Segmentation fault!
     */
+
+   if (map==NULL) {
+        printf("Error print_hashmap_int : no hashmap to print\n");
+        return;
+    } 
+
     for(int i = 0;i<TABLE_SIZE;i++){
         if(((map->table[i]).key!=TOMBSTONE) && ((map->table[i]).key!=NULL)){
             printf("%s -> %d\n",map->table[i].key,*(int *)(map->table[i].value));

@@ -14,12 +14,18 @@ MemoryHandler *memory_init(int size){
     assert(handler);
     handler->total_size = size;
     Segment * segment = (Segment*)malloc(sizeof(Segment));
+    assert(segment);
     segment->next = NULL;
     segment->start = 0;
     segment->size = size;
     handler->free_list = segment;
     handler->allocated = hashmap_create();
+    if (handler->allocated==NULL){
+         printf("Error memory_init : hashmap creation failed \n");
+         return NULL;
+    }
     handler->memory = (void**)calloc(size,sizeof(void*));
+    assert(handler->memory);
     return handler;
 }
 
@@ -33,12 +39,15 @@ Segment* find_free_segment(MemoryHandler* handler, int start, int size, Segment 
             MemoryHandler * handler
             int start - desired start position 
             int size - desired segment's length
-            Segment ** prev - pointer to previous segment
+            Segment ** prev - pointer to previous segment ( to return previous segment of the segment found)
         Output: 
             Segment * result - pointer to the segment containing the desired segment
     */
     
-    if (!handler) return NULL;
+    if (handler==NULL){
+         printf("Error find_free_segment : no handler to look for segment \n");
+         return NULL;
+    }
     // search from first unallocated segment
     Segment * free_list = handler->free_list;
     Segment * prec = NULL;
@@ -71,9 +80,19 @@ int create_segment(MemoryHandler * handler,const char *name,int start, int size)
             1 - successful allocation
     */
     
+    if (handler==NULL){
+         printf("Error find_free_segment : no handler to create segment in \n");
+         return 0;
+    }
+    if (name==NULL){
+         printf("Error find_free_segment : no name for segment to be allocated \n");
+         return 0;
+    }
+
     Segment * prev;
     Segment * seg_libre = find_free_segment(handler,start,size,&prev);
     if(!seg_libre){
+        printf("Error create_segment : no free segment large enough was found to allocate new segment \n");
         return 0;
     }
     //Creation of subsegments
@@ -139,11 +158,24 @@ int remove_segment(MemoryHandler * handler, const char *name){
             1 - successful deletion
     */
     
+    if (handler==NULL){
+         printf("Error remove_segment : no handler to remove segment from \n");
+         return 0;
+    }
+
+    if (name==NULL){
+         printf("Error remove_segment : no name for the segment to be removed \n");
+         return 0;
+    }
     Segment *aliberer= (Segment*)hashmap_get(handler->allocated,name);
     //element does not exist / is not allocated
     if (aliberer==NULL) return 0;
     //remove segment from hashmap
-    hashmap_remove(handler->allocated,name);
+    
+    if (hashmap_remove(handler->allocated,name)==0){
+         printf("Error remove_segment : segment could not be removed from hashmap \"allocated\" \n");
+         return 0;
+    }
     Segment *courant=handler->free_list;
     int merged=0;
     Segment *before;
@@ -202,8 +234,14 @@ void print_free_list(MemoryHandler *handler){
     /*
         Utility function showing a list of free segments
     */
+    
+    if (handler==NULL){
+        printf("Error print_free_list : no handler to print free_list \n");
+        return ;
+   }
+    
     Segment * tmp = handler->free_list;
-    printf("List of segments : ");
+    printf("Free Segments List: ");
     while(tmp){
         printf("[%d, %d],",tmp->start, tmp->size);
         tmp = tmp->next;
