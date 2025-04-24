@@ -1,37 +1,64 @@
 #include "exo4.h"
 
-CPU * cpu_init(int memory_size){ //? 
-    if (memory_size<128) {
+CPU * cpu_init(int memory_size) {
+    if (memory_size < 128) {
         printf("Error cpu_init : CPU should be initialized at a bigger size\n");
         return NULL;
     }
-    
-    CPU * cpu = (CPU*)malloc(sizeof(CPU));
-    cpu->memory_handler = memory_init(memory_size);
 
-    create_segment(cpu->memory_handler,"SS",0,128);
+    CPU *cpu = (CPU *)malloc(sizeof(CPU));
+    cpu->memory_handler = memory_init(memory_size);
+    if (cpu->constant_pool) { printf("Error cpu_init : failed to initialize memory handler \"SS\" \"context\"\n"); return NULL; }
+
+    create_segment(cpu->memory_handler, "SS", 0, 128);
+    if (cpu->constant_pool) { printf("Error cpu_init : failed to create stack segment \"SS\"\n"); return NULL; }
 
     cpu->context = hashmap_create();
-    hashmap_insert(cpu->context, "AX", int_to_point(0));
-    hashmap_insert(cpu->context, "BX", int_to_point(0));
-    hashmap_insert(cpu->context, "CX", int_to_point(0));
-    hashmap_insert(cpu->context, "DX", int_to_point(0));
+    if (cpu->constant_pool) { printf("Error cpu_init : failed to create hashmap \"context\"\n"); return NULL; }
 
-    hashmap_insert(cpu->context, "IP", int_to_point(0));
-    hashmap_insert(cpu->context, "ZF", int_to_point(0));
-    hashmap_insert(cpu->context, "SF", int_to_point(0));
+    int succ = 0;
+    succ = hashmap_insert(cpu->context, "AX", int_to_point(0));
+    if (succ == 0) { printf("Error cpu_init : failed to insert in hashmap \"context\"\n"); return NULL; }
 
-    hashmap_insert(cpu->context, "SP", int_to_point(127));
-    hashmap_insert(cpu->context, "BP", int_to_point(127));
+    succ = hashmap_insert(cpu->context, "BX", int_to_point(0));
+    if (succ == 0) { printf("Error cpu_init : failed to insert in hashmap \"context\"\n"); return NULL; }
 
-    hashmap_insert(cpu->context, "ES", int_to_point(-1));
+    succ = hashmap_insert(cpu->context, "CX", int_to_point(0));
+    if (succ == 0) { printf("Error cpu_init : failed to insert in hashmap \"context\"\n"); return NULL; }
 
+    succ = hashmap_insert(cpu->context, "DX", int_to_point(0));
+    if (succ == 0) { printf("Error cpu_init : failed to insert in hashmap \"context\"\n"); return NULL; }
+
+    succ = hashmap_insert(cpu->context, "IP", int_to_point(0));
+    if (succ == 0) { printf("Error cpu_init : failed to insert in hashmap \"context\"\n"); return NULL; }
+
+    succ = hashmap_insert(cpu->context, "ZF", int_to_point(0));
+    if (succ == 0) { printf("Error cpu_init : failed to insert in hashmap \"context\"\n"); return NULL; }
+
+    succ = hashmap_insert(cpu->context, "SF", int_to_point(0));
+    if (succ == 0) { printf("Error cpu_init : failed to insert in hashmap \"context\"\n"); return NULL; }
+
+    succ = hashmap_insert(cpu->context, "SP", int_to_point(127));
+    if (succ == 0) { printf("Error cpu_init : failed to insert in hashmap \"context\"\n"); return NULL; }
+
+    succ = hashmap_insert(cpu->context, "BP", int_to_point(127));
+    if (succ == 0) { printf("Error cpu_init : failed to insert in hashmap \"context\"\n"); return NULL; }
+
+    succ = hashmap_insert(cpu->context, "ES", int_to_point(-1));
+    if (succ == 0) { printf("Error cpu_init : failed to insert in hashmap \"context\"\n"); return NULL; }
 
     cpu->constant_pool = hashmap_create();
+    if (cpu->constant_pool) { printf("Error cpu_init : failed to create hashmap \"constant_pool\"\n"); return NULL; }
+
+
     return cpu;
 }
 
 void cpu_destroy(CPU *cpu){
+    if (cpu->constant_pool) { 
+        printf("Error cpu_destroy : no cpu to destroy\n"); 
+        return ; 
+    }
     free_memory_handler(cpu->memory_handler);
     hashmap_destroy(cpu->context);
     hashmap_destroy(cpu->constant_pool);
@@ -42,7 +69,11 @@ void cpu_destroy(CPU *cpu){
 
 void allocate_variables(CPU *cpu, Instruction** data_instructions,int data_count){
     // nb_data_occ -- external variable qui contient la taille de l'espace necessaire au stockage des variables  
-    create_segment(cpu->memory_handler,"DS",cpu->memory_handler->free_list->start,nb_data_occ);
+    int succ=create_segment(cpu->memory_handler,"DS",cpu->memory_handler->free_list->start,nb_data_occ);
+    if (succ==0) { 
+        printf("Error allocate_variables : failed to create data segment \"DS\"\n"); 
+        return ; 
+    }
 
     //indice dans la memoire de CPU
     int pos=0;

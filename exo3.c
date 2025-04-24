@@ -3,6 +3,16 @@
 int nb_data_occ = 0;
 
 Instruction *parse_data_instruction(const char * line, HashMap *memory_locations){
+    if (line==NULL){
+         printf("Error parse_data_instructions : no line to parse instruction from \n");
+         return NULL;
+    }
+
+    if (memory_locations==NULL){
+         printf("Error parse_data_instructions : no \"memory_locations\" hashmap to parse in \n");
+         return NULL;
+    }
+
     static int nb_occ = 0;
     char mnemonic[256];
     char operand1[256];
@@ -22,13 +32,25 @@ Instruction *parse_data_instruction(const char * line, HashMap *memory_locations
     inst->operand2 = strdup(operand2);
     int * value = malloc(sizeof(int));
     *value = nb_occ;
-    hashmap_insert(memory_locations,mnemonic,value);
+    if (hashmap_insert(memory_locations,mnemonic,value)==0){
+         printf("Error parse_data_instructions : insertion in \"memory_locations\" hashmap failed \n");
+         return NULL;
+    }
     nb_occ += count;
     nb_data_occ = nb_occ;
     return inst;
 }
 
 Instruction *parse_code_instruction(const char *line, HashMap *labels, int code_count) {
+    if (line==NULL){
+         printf("Error parse_code_instructions : no line to parse instruction from \n");
+         return NULL;
+    }
+    if (labels==NULL){
+         printf("Error parse_code_instructions : no \"labels\" to parse in \n");
+         return NULL;
+    }
+    
     char buffer[256];
     strncpy(buffer, line, 255);
     buffer[255] = '\0';
@@ -78,9 +100,13 @@ Instruction *parse_code_instruction(const char *line, HashMap *labels, int code_
 
 
 ParserResult *parse(const char *filename){
+    if (filename==NULL){
+        printf("Error parse : no file name to parse file  \n");
+        return NULL;
+    }
 
     int len = strlen(filename);
-    if (!(len >= 4 || strcmp(filename + len - 4, ".txt") == 0)){
+    if (!(len >= 4 && strcmp(filename + len - 4, ".txt") == 0)){
         printf("Error parse : File name in wrong format. Enter a file name with .txt extension \n");
         return NULL;
     }
@@ -89,12 +115,20 @@ ParserResult *parse(const char *filename){
     ParserResult *parser=(ParserResult *)malloc(sizeof(ParserResult));
     assert(parser);
     parser->data_instructions=(Instruction **)malloc(sizeof(Instruction *)*NBMININST);
+    assert(parser->data_instructions);
     parser->code_instructions=(Instruction **)malloc(sizeof(Instruction *)*NBMININST);
+    assert(parser->code_instructions);
     parser->memory_locations=hashmap_create();
+    if (parser->memory_locations==NULL){
+        printf("Error parse : Failed to create hashmap \"memory_locations\" \n");
+        return NULL;
+    }
     parser->labels=hashmap_create();
+    if (parser->memory_locations==NULL){
+        printf("Error parse : Failed to create hashmap \"labels\" \n");
+        return NULL;
+    }
     
-   
-
     FILE *F=fopen(filename,"r");
     if (F==NULL){
         printf("Error parse : file not found / error opening file \n");
@@ -126,6 +160,10 @@ ParserResult *parse(const char *filename){
             parser->data_instructions= tmp;
         }
         Instruction *inst= parse_data_instruction(buffer,parser->memory_locations);
+        if (inst==NULL){
+        printf("Error parse : Failed to parse a data instruction. Aborting. \n");
+        return NULL;
+        }
         parser->data_instructions[nbdata]=inst;
         nbdata++;
 
@@ -157,6 +195,10 @@ ParserResult *parse(const char *filename){
             parser->code_instructions= tmp;
         }
         Instruction *inst= parse_code_instruction(buffer,parser->labels, nbcode);
+        if (inst==NULL){
+        printf("Error parse : Failed to parse a code instruction. Aborting. \n");
+        return NULL;
+        }
          parser->code_instructions[nbcode]=inst;
          nbcode++;
 
@@ -172,6 +214,10 @@ ParserResult *parse(const char *filename){
 
 
 void free_parser_result(ParserResult *parser){
+    if (parser==NULL){
+        printf("Error free_parser_result : no parser to free \n");
+        return ;
+        }
     // for(int i = 0; i<parser->data_count;i++){
     //     Instruction* inst = parser->data_instructions[i];
     //     free(inst->mnemonic);
@@ -195,7 +241,7 @@ void free_parser_result(ParserResult *parser){
 
 
 void print_instruction(Instruction *inst){
-    if (!inst){
+    if (inst==NULL){
         printf("Error print_instruction : no instruction found\n");
         return;
     }
@@ -213,6 +259,10 @@ void print_instruction(Instruction *inst){
 
 
 void parser_show(ParserResult * parser){
+    if (parser==NULL){
+        printf("Error parser_show: no parser found\n");
+        return;
+    }
     printf("====== PARSER CONTENT ======\n\n");
     printf("______ .DATA instructions ______\n\n");
     for (int i = 0; i<parser->data_count;i++){
@@ -233,6 +283,10 @@ void parser_show(ParserResult * parser){
 }
 
 void free_instruction(Instruction *inst){
+    if (inst==NULL){
+        printf("Error free_instruction : no instruction found\n");
+        return;
+    }
     print_instruction(inst);
     free(inst->mnemonic);
     if (inst->operand1) free(inst->operand1);
@@ -241,6 +295,10 @@ void free_instruction(Instruction *inst){
 }
 
 void free_memory_handler(MemoryHandler * handler){
+    if (handler==NULL){
+        printf("Error free_memory_handler : no handler to free\n");
+        return;
+    }
     /*
         Delete MemoryHandler:
         The function clears the memory space occupied by the structure  
@@ -291,18 +349,27 @@ void free_memory_handler(MemoryHandler * handler){
 
 void* store(MemoryHandler *handler, const char *segment_name, int pos, void *data){
     Segment *seg=(Segment *)hashmap_get(handler->allocated,segment_name);
-    if (!seg || (pos >= seg->size)) return NULL;
-  
-    int true_pos = seg->start + pos;
+    if (seg==NULL){
+        printf("Error store : segment not found in \"allocated\" hashmap\n");
+        return NULL;
+    }
+    if (pos >= seg->size){
+        printf("Segmentation fault store in memory tab: value out of bounds\n");
+        return NULL;
+    }
 
-    handler->memory[true_pos] = data;
+    handler->memory[seg->start + pos] = data;
     return data;
 }
 
 void *load(MemoryHandler *handler, const char *segment_name, int pos){
     Segment *seg=(Segment *)hashmap_get(handler->allocated,segment_name);
-    if (!seg || (pos >= seg->size)) {
-        printf("Segmentation fault load : value out of bounds");
+    if (seg==NULL){
+        printf("Error load : segment not found in \"allocated\" hashmap\n");
+        return NULL;
+    }
+    if (pos >= seg->size){
+        printf("Segmentation fault load in memory tab: value out of bounds\n");
         return NULL;
     }
     return (handler->memory[seg->start+pos]);
