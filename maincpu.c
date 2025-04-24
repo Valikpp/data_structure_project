@@ -355,7 +355,7 @@ int menu4(CPU* cpu, ParserResult* parser){
             usleep(1300000);
             exit(0); 
     }
-    return 1;
+    return 0;
 
 }
 
