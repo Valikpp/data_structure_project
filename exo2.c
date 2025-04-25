@@ -124,9 +124,9 @@ int create_segment(MemoryHandler * handler,const char *name,int start, int size)
         assert(after);
         after->start = start+size;
         after->size = seg_libre->size - start - size;
-        //liason avec le suivant
-        after->next = seg_libre->next; // ?? prq on a echangé? before->next=after  
-        seg_libre->next = after;           //after->next=seg_libre->after. 
+        //link with the following
+        after->next = seg_libre->next;  
+        seg_libre->next = after;          
     }
     // Desired segment allocation
     new_seg = malloc(sizeof(Segment));

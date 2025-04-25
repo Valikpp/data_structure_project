@@ -1,12 +1,22 @@
 #include "exo6.h"
 
 int main(){
+    /*
+        This main tests CPU management functions 
+    */
+    printf("===== This main tests addressing functions in special predefined context =====\n");
+
+    // CPU initialization
     CPU * cpu = setup_test_environment();
+
+    //Parsing of pseudo-assembler programme
     ParserResult * parser = parse("setup_env_test.txt");
+    printf("\n--- PARSER initial state ---\n");
     parser_show(parser);
 
-    Instruction ** inst=parser->code_instructions; //tableau d'instructions de CODE de notre pseudo assembleur
+    Instruction ** inst=parser->code_instructions; //table of .CODE instructions
     
+    printf("\n--- CPU initial state ---\n");
     print_data_segment(cpu);
     print_hashmap_int(cpu->context);
     
@@ -24,11 +34,16 @@ int main(){
 
         }
     }
-
+    printf("\n--- CPU final state ---\n");
     print_data_segment(cpu);
     print_hashmap_int(cpu->context);
-    
+    allocate_code_segment(cpu,parser->code_instructions,parser->code_count);
+
+    for (int i = 0; i<parser->data_count;i++){
+        free_instruction(parser->data_instructions[i]); //setup_test_env sets manually memory, so allocate_variables wasn't applied. As a result data instructions must be free manually
+    }
     free_parser_result(parser);
     cpu_destroy(cpu);
+    printf("===== End of main5 =====\n"); 
     return 0;
 }

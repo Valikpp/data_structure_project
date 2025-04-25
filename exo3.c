@@ -56,6 +56,16 @@ Instruction *parse_data_instruction(const char * line, HashMap *memory_locations
 }
 
 Instruction *parse_code_instruction(const char *line, HashMap *labels, int code_count) {
+    /*
+        .CODE instructions parsing function: 
+        Parses an instruction of type .CODE from the original file into instruction type for the programme
+        
+        Input: 
+            char * line -- line of .CODE in pseudo-assembler (Ex: MOV AX [0])
+            HashMap * labels -- hashmap containing pair (special label <-> line in programme) (Ex: loop <-> 5) 
+        Output: Instruction * inst (Ex: inst->mnemonic = MOV, inst->operand1 = AX, inst->operand2 = [0])
+    */
+
     if (line==NULL){
          printf("Error parse_code_instructions : no line to parse instruction from \n");
          return NULL;
@@ -65,6 +75,7 @@ Instruction *parse_code_instruction(const char *line, HashMap *labels, int code_
          return NULL;
     }
     
+    // Create a buffer to copy the input line for safe tokenization
     char buffer[256];
     strncpy(buffer, line, 255);
     buffer[255] = '\0'; // Ensure null termination
@@ -133,6 +144,17 @@ Instruction *parse_code_instruction(const char *line, HashMap *labels, int code_
 
 
 ParserResult *parse(const char *filename){
+    /*
+        Initial file parsing function: 
+        Parses all instructions from the original file into instructions type for the programme and store them in parser_result object
+        Input: 
+            char * filename -- name of original file in pseudo-assembler  
+        Output: ParserResult * parser -- an object of type ParserResult keeping:
+                    1) all parsed .DATA and .CODE instructions
+                    2) number of .DATA and .CODE instructions
+                    3) Hashmap of pairs (variable_name <-> memory_position)
+                    4) Hashmap of special labels (label <-> line in code)
+    */
     if (filename==NULL){
         printf("Error parse : no file name to parse file  \n");
         return NULL;
@@ -247,17 +269,21 @@ ParserResult *parse(const char *filename){
 
 
 void free_parser_result(ParserResult *parser){
+    /*
+        ParserResult object clearing
+        Clears all dynamic memory allocated by ParserResult
+        Input: 
+            ParserResult * parser -- object of type ParserResult
+    */
+    /*
+        IMPORTANT: 
+            This function does not free .DATA instructions because this operation will be treated during allocate_variables 
+            This function does not free .CODE instructions because this operation will be treated during CPU_destruction
+    */
     if (parser==NULL){
         printf("Error free_parser_result : no parser to free \n");
         return ;
         }
-    // for(int i = 0; i<parser->data_count;i++){
-    //     Instruction* inst = parser->data_instructions[i];
-    //     free(inst->mnemonic);
-    //     free(inst->operand1);
-    //     if (inst->operand2) free(inst->operand2);
-    //     free(inst);
-    // }
     free(parser->data_instructions);
     free(parser->code_instructions);
     hashmap_destroy(parser->memory_locations);
@@ -268,6 +294,9 @@ void free_parser_result(ParserResult *parser){
 
 
 void print_instruction(Instruction *inst){
+    /*
+        Utility function showing all instruction's defined attributes
+    */
     if (inst==NULL){
         printf("Error print_instruction : no instruction found\n");
         return;
@@ -286,6 +315,9 @@ void print_instruction(Instruction *inst){
 
 
 void parser_show(ParserResult * parser){
+    /*
+        Utility function showing a entire ParserResult content
+    */
     if (parser==NULL){
         printf("Error parser_show: no parser found\n");
         return;
@@ -310,11 +342,13 @@ void parser_show(ParserResult * parser){
 }
 
 void free_instruction(Instruction *inst){
+    /*
+        Utility function clearing dynamic memory allocated by Instruction object
+    */
     if (inst==NULL){
         printf("Error free_instruction : no instruction found\n");
         return;
     }
-    print_instruction(inst);
     free(inst->mnemonic);
     if (inst->operand1) free(inst->operand1);
     if (inst->operand2) free(inst->operand2);   
@@ -322,10 +356,6 @@ void free_instruction(Instruction *inst){
 }
 
 void free_memory_handler(MemoryHandler * handler){
-    if (handler==NULL){
-        printf("Error free_memory_handler : no handler to free\n");
-        return;
-    }
     /*
         Delete MemoryHandler:
         The function clears the memory space occupied by the structure  
@@ -333,7 +363,11 @@ void free_memory_handler(MemoryHandler * handler){
             MemoryHandler * handler
         Output: NULL
     */
-
+    if (handler==NULL){
+        printf("Error free_memory_handler : no handler to free\n");
+        return;
+    }
+    
     // Data segment clearing
     Segment* data_segment = hashmap_get(handler->allocated, "DS");
     if (data_segment) {

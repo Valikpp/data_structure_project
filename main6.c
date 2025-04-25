@@ -1,6 +1,11 @@
 #include "exo6.h"
 
 int main(){
+    /*
+        This main tests programme running management functions 
+    */
+    printf("===== This main tests programme running management functions =====\n");
+
     CPU * cpu = cpu_init(1024);
     ParserResult * parser = parse("test2.txt");
 
@@ -24,6 +29,7 @@ int main(){
 
     free_parser_result(parser);
     cpu_destroy(cpu);
+    printf("===== End of main6 =====\n"); 
     return 0;
 
 }
