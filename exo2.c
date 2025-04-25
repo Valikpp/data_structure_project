@@ -53,9 +53,14 @@ Segment* find_free_segment(MemoryHandler* handler, int start, int size, Segment 
     Segment * prec = NULL;
     while (free_list){
         // Current segment satisfies desired start and size
-        if((free_list->start <= start)&&(free_list->size>=size)){
+        if((free_list->start <= start)){
+            if(free_list->size>=size){
             *prev=prec;
-            return free_list; 
+            return free_list;
+            }else{
+                printf("Error find_free_segment : free segment containing start position not large enough \n");
+                return NULL;
+            } 
         }
         prec = free_list;
         free_list = free_list->next;
@@ -217,7 +222,6 @@ int remove_segment(MemoryHandler * handler, const char *name){
     }
 
     if (!merged){
-        //addition in head (we do ordered?)
         aliberer->next=handler->free_list;
         handler->free_list=aliberer;
 
