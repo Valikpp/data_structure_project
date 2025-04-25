@@ -2,6 +2,16 @@
 
 
 char *trim(char *str) {
+    /*
+        Trim Whitespace from String:
+        Removes leading and trailing whitespace characters (spaces, tabs, newlines, carriage returns) from the given string.
+        
+        Input: 
+            char *str - a modifiable C string that may contain leading or trailing whitespace
+        Output: 
+            char * - pointer to the first non-whitespace character of the modified input string
+                    (the original string is modified in-place and returned)
+    */
     while (*str == ' ' || *str == '\t' || *str == '\n' || *str == '\r') {
         str++;
     }
@@ -15,6 +25,18 @@ char *trim(char *str) {
 }
 
 int search_and_replace(char **str, HashMap *values) {
+    /*
+        String interpolation using a context Hashmap:
+        For every key of HashMap presented in str the function replaces key by value
+
+        Input: 
+            char **str -- double pointer to string (necessary to work in-place)
+            HashMap * values -- HashMap of context information
+        Output: 
+            1 in case of successful replace
+            0 -- Hashmap's keys are not present in str
+    */
+    
     if (!str || !*str || !values) return 0;
 
     int replaced = 0;
@@ -67,15 +89,26 @@ int search_and_replace(char **str, HashMap *values) {
 }
 
 int resolve_constants(ParserResult * result){
+    /*
+        .CODE instruction's operand treatment
+        Replaces variables with their address in the data segment and labels with their address in the code.
+        
+        Input: 
+            ParserResult * result -- result of pseudo-assembler parse
+        Output: 
+            1 in case of successful replace for all Instructions
+            0 in other cases
+    */
     if (!result) return 0;
     for(int i = 0; i<result->code_count;i++){
         Instruction * inst = result->code_instructions[i];
-        if(inst->operand2){
+        if(inst->operand2){ // Current instruction own an operand2
             search_and_replace(&(inst->operand2),result->memory_locations);
             search_and_replace(&(inst->operand1),result->memory_locations);
-        }else{
+        }else{ // Only 1 operand 
             if(inst->operand1){
                 int succ=search_and_replace(&(inst->operand1),result->labels);
+                // No substitution has occurred, and also the mnemonic is not a push or pop operation
                 if (!succ && strcmp(inst->mnemonic,"PUSH") && strcmp(inst->mnemonic,"POP")) {
                     printf("Error resolve_constants : invalid address with mnemonic %s \n",inst->mnemonic);
                     return 0;
@@ -88,6 +121,16 @@ int resolve_constants(ParserResult * result){
 }
 
 void allocate_code_segment(CPU *cpu, Instruction **code_instructions, int code_count){
+    /*
+        Allocation of segment for .CODE instructions
+        Allocates a CS segment at the first free place and stores all .CODE instructions in memory
+        Sets a iteration pointer IP register to 0 (first line of code)
+        
+        Input: 
+            CPU *cpu -- initialized CPU
+            Instruction **code_instructions -- list of .CODE instructions AFTER CONSTANTS RESOLVING 
+            int code_count -- number of .CODE instructions
+    */
     int start = find_free_address_strategy(cpu->memory_handler,code_count,1);
     create_segment(cpu->memory_handler,"CS",start,code_count);
     for (int i=0;i<code_count;i++){
@@ -98,15 +141,40 @@ void allocate_code_segment(CPU *cpu, Instruction **code_instructions, int code_c
 }
 
 int handle_instruction(CPU *cpu, Instruction *instr, void *src, void *dest){
+    /*
+        Treatment of instruction's operations 
+        According the mnemonic execute an instruction
+
+        Input: 
+            CPU *cpu -- initialized CPU
+            Instruction *instr -- .CODE instruction AFTER CONSTANTS RESOLVING 
+            void * src -- pointer to source value for operation (Responds at "which value use?")
+            void * dest -- pointer to destination used to store the result of operation (Responds at "Where store the result?")
+        Output:
+            1 in case of successful execution of instruction
+            0 in case of wrong mnemonic or execution error    
+*/
     char * mnemonic = instr->mnemonic;
+    //Already defined
     if(strcmp(mnemonic,"MOV")==0){
         handle_MOV(cpu,src,dest);
         return 1;
     }
+
+    /*
+        Addition operation: adds value of source to value of dest
+        Stores result at dest
+    */
     if(strcmp(mnemonic,"ADD")==0){
         *((int*)dest) = *((int*)dest) + *((int*)src);
         return 1;
     }
+
+    /*
+        Comparison operation: Comparing the value of src and dest
+        Sets ZF to 1 at case of equality
+        Sets SF to 1 if src is bigger that result
+    */
     if(strcmp(mnemonic,"CMP")==0){
         int res=(*(int *)dest) - (*(int *)src);
         int * zf = (int *)hashmap_get(cpu->context,"ZF");
@@ -121,11 +189,17 @@ int handle_instruction(CPU *cpu, Instruction *instr, void *src, void *dest){
         }
         return 1;
     }
+    /*
+        Operate to move the executor (IP) to the specified line
+    */
     if(strcmp(mnemonic,"JMP")==0){
         int * reg_ip = (int *)hashmap_get(cpu->context,"IP");
         *reg_ip =*(int *)src;
         return 1;
     }
+    /*
+        Operate to move the executor (IP) to the specified line in case than previous instruction was terminated with result 0
+    */
     if(strcmp(mnemonic,"JZ")==0){
         int * reg_zf = (int *)hashmap_get(cpu->context,"ZF");
         if(*reg_zf==1){
@@ -134,6 +208,9 @@ int handle_instruction(CPU *cpu, Instruction *instr, void *src, void *dest){
         }
         return 1;
     }
+    /*
+        Operate to move the executor (IP) to the specified line in case than previous instruction was terminated with non-zero result 
+    */
     if(strcmp(mnemonic,"JNZ")==0){
         int * reg_zf = (int *)hashmap_get(cpu->context,"ZF");
         if(*reg_zf==0){
@@ -142,6 +219,9 @@ int handle_instruction(CPU *cpu, Instruction *instr, void *src, void *dest){
         }
         return 1;
     }
+    /*
+        Stops code execution by moving the executor to the end of CS segment
+    */
     if(strcmp(mnemonic,"HALT")==0){
         Segment * cs = (Segment *)hashmap_get(cpu->memory_handler->allocated,"CS");
         if (!cs) return 0;
@@ -149,6 +229,9 @@ int handle_instruction(CPU *cpu, Instruction *instr, void *src, void *dest){
         *reg_ip=cs->size;
         return 1;
     }
+    /*
+        Pushes value of src in stack (value of AX if src undefined)
+    */
     if(strcmp(mnemonic,"PUSH")==0){
         int *reg;
         if (src) reg=src;
@@ -156,7 +239,9 @@ int handle_instruction(CPU *cpu, Instruction *instr, void *src, void *dest){
         int p=push_value(cpu,*reg);
         if (p!=-1) return 1;
     }
-
+    /*
+        Removes value from stack and stores value in dest (in AX if dest undefined)
+    */
     if(strcmp(mnemonic,"POP")==0){
         int *reg;
         if (dest) reg=dest;
@@ -164,12 +249,16 @@ int handle_instruction(CPU *cpu, Instruction *instr, void *src, void *dest){
         int p=pop_value(cpu,reg);
         if (p!=-1) return 1;
     }
-
+    /*
+        Allocation of ES segment
+    */
     if(strcmp(mnemonic,"ALLOC")==0){
         int succ=alloc_es_segment(cpu);
         return succ;
     }
-
+    /*
+        Clearing of ES segment
+    */
     if(strcmp(mnemonic,"FREE")==0){
         int succ=free_es_segment(cpu);
         return succ;
@@ -179,25 +268,47 @@ int handle_instruction(CPU *cpu, Instruction *instr, void *src, void *dest){
 }
 
 int execute_instruction(CPU *cpu, Instruction *instr){
+    /*
+        Executing of instruction  
+        Apply a correct way to treat the instruction according the type of mnemonic
 
+        Input: 
+            CPU *cpu -- initialized CPU
+            Instruction *instr -- .CODE instruction AFTER CONSTANTS RESOLVING 
+        Output:
+            1 in case of successful execution
+            0 in other cases
+    */
+    
+    // Jump or conditional jump instruction take operand1 as a source
     if (strcmp(instr->mnemonic, "JMP") == 0 || strcmp(instr->mnemonic, "JZ") == 0 ||
      strcmp(instr->mnemonic, "JNZ") == 0){
         return handle_instruction(cpu,instr,resolve_addressing(cpu,instr->operand1),NULL);
     }
-
+    // Push takes operand1 as a source
     if (strcmp(instr->mnemonic, "PUSH") == 0) {
         return handle_instruction(cpu,instr,resolve_addressing(cpu,instr->operand1),NULL);
     }   
-    
+    // Pop takes operand1 as a destination
     if (strcmp(instr->mnemonic, "POP") == 0){
         return handle_instruction(cpu,instr,NULL,resolve_addressing(cpu,instr->operand1));
     }
-
+    // Operand2 - source, operand1 - dest
     return handle_instruction(cpu,instr,resolve_addressing(cpu,instr->operand2),resolve_addressing(cpu,instr->operand1));
 
 }
 
 Instruction *fetch_next_instruction(CPU *cpu){
+    /*
+        Loading of next instruction
+        Loads a next instruction to execute and increments executor pointer IP
+
+        Input: 
+            CPU *cpu -- initialized CPU
+        Output:
+            Instruction * inst -- instruction to execute
+            NULL -- no executor/no code segment/no more instructions
+    */
     Segment *cs=hashmap_get(cpu->memory_handler->allocated,"CS");
     int* ip =hashmap_get(cpu->context,"IP");
     if (ip==NULL || cs==NULL || *ip>=cs->size) return NULL;
@@ -238,36 +349,6 @@ int run_program(CPU *cpu){  //memory handler deja rempli
     printf("\n");
     return 1;
 }
-
-// int run_program_preview(CPU *cpu){ 
-//     printf("CPU INITIAL STATE : \n");
-//     print_cpu(cpu);
-
-//     Segment *ds=hashmap_get(cpu->memory_handler->allocated,"DS");
-//     if (!ds) return 0;
-
-//     Instruction *courant=fetch_next_instruction(cpu);
-//     while (courant){
-       
-//         printf("PRESS \"ENTER\" TO EXECUTE THE NEXT INSTRUCTION : [ ");
-//         print_instruction(courant);
-//         printf(" ] OR \"Q\" to QUIT EXECUTION\n ");
-//         char val=getchar();
-//         if (val=='\n'){
-//             int e=execute_instruction(cpu,courant);
-//             if (!e) return 0;
-//             courant=fetch_next_instruction(cpu);
-//             print_cpu(cpu);
-//         }
-//         else if (val=='q' || val=='Q'){
-//             break; 
-//         }
-//     }
-// printf("CPU FINAL STATE : \n");
-//     print_cpu(cpu);
-//     printf("\n");
-//     return 1;
-// }
 
 int run_program_preview(CPU *cpu) { 
     printf("CPU INITIAL STATE : \n");

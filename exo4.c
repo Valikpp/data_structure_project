@@ -8,7 +8,7 @@ CPU * cpu_init(int memory_size){
         Input:
             int memory_size -- desired memory size (128 and more bytes)
         Output:
-            CPU * cpu 
+            CPU * cpu object
     */
     
     if (memory_size<128) {
@@ -364,7 +364,7 @@ void handle_MOV(CPU * cpu, void * src, void *dest){
         Input:
             CPU * cpu -- initialized CPU
             void * src -- source pointer
-            void * dest -- source pointer
+            void * dest -- destination pointer
         Output:
             NULL
     */
@@ -373,6 +373,16 @@ void handle_MOV(CPU * cpu, void * src, void *dest){
 }
 
 int push_value(CPU *cpu, int value){ //retourne -1 et pas 0 en cas d'erreur
+    /*
+        Stack push operation
+        The function pushes the value on the top of stack (Stack Segment)  
+        Input:
+            CPU * cpu -- initialized CPU
+            int value -- value to push
+        Output:
+            1 in case of success
+            -1 in other case
+    */
     int *sp=hashmap_get(cpu->context,"SP");
     if (!sp || (*sp)<0) return -1;
     void* s=store(cpu->memory_handler,"SS",*sp,int_to_point(value));
@@ -382,6 +392,17 @@ int push_value(CPU *cpu, int value){ //retourne -1 et pas 0 en cas d'erreur
 }
 
 int pop_value(CPU *cpu, int* dest){ //caster le void* à l'appel?
+    /*
+        Stack pop operation
+        The function deletes the value from the top of stack (Stack Segment)
+        Then returns a value by parameter 
+        Input:
+            CPU * cpu -- initialized CPU
+            int * dest -- pointer to memory receiveing the value
+        Output:
+            1 in case of success + value returned by parameter
+            -1 in other case
+    */
     int *sp=hashmap_get(cpu->context,"SP");
     if (*sp>=128) return -1;
     void*l=load(cpu->memory_handler,"SS",(*sp)+1);
@@ -393,10 +414,28 @@ int pop_value(CPU *cpu, int* dest){ //caster le void* à l'appel?
 
 
 int find_free_address_strategy(MemoryHandler *handler, int size, int strategy){
+    /*
+        Segment choice with selected strategy
+        The function seeking for a free memory segment according to the strategy: 
+
+            - First Fit (0): Allocates the first sufficiently large free memory segment.
+            
+            - Best Fit (1): Finds the memory segment whose size is closest to the requested size,
+              with a view to minimising potential wastage.
+            
+            - Worst Fit (2): Selects the segment with the largest remaining free space.
+
+        Input:
+            MemoryHandler *handler -- initialized Memory Handler
+            int size -- minimal size required for segment
+            int strategy -- 
+        Output: 
+    */
     Segment *list=handler->free_list;
     int min,max,res;
     switch (strategy) {
         case 0:
+            // First free segment
             while (list){
                 if (list->size>=size) return list->start;
                 list=list->next;
@@ -405,6 +444,7 @@ int find_free_address_strategy(MemoryHandler *handler, int size, int strategy){
         case 1:
             min = INT_MAX;
             res=-1;
+            // Segment with minimal potential wastage
             while (list){
                 int dif=list->size-size;
                 if (dif>=0 && dif<min) {
@@ -418,6 +458,7 @@ int find_free_address_strategy(MemoryHandler *handler, int size, int strategy){
         case 2:
             max=-1;
             res=-1;
+            // Segment with largest remaining free space
             while (list){
                 if (list->size>max && list->size>=max) res=list->start;
                 list=list->next;
@@ -431,28 +472,39 @@ int find_free_address_strategy(MemoryHandler *handler, int size, int strategy){
 }  
 
 int alloc_es_segment(CPU* cpu){
-    int* ax=hashmap_get(cpu->context,"AX");
-    int *bx=hashmap_get(cpu->context,"BX");
+    /*
+        Dynamic allocation of ES segment
+        The function allocates a segment ES of size AX's value according the strategy stored in register BX,
+        then it changes ZF register's value to 0 in case of successful allocation
+            -- for strategy types look find_free_address_strategy
+        Input:
+            CPU * cpu -- initialized CPU
+        Output: 
+            1 in case of success
+            0 in other cases
+    */
+    int* ax=hashmap_get(cpu->context,"AX"); //Get value of AX register
+    int *bx=hashmap_get(cpu->context,"BX"); //Get value of BX register
     if (!((*bx==0) || (*bx==1)|| (*bx==2) ) ){
         printf("Error alloc_es_segment : register BX not properly set to an allocating strategy. Set to 0, 1 or 2\n ");
         usleep(1300000);
      return 0;   
     } 
-    int *zf=hashmap_get(cpu->context,"ZF");
+    int *zf=hashmap_get(cpu->context,"ZF"); //Get value of ZF register
     int start=find_free_address_strategy(cpu->memory_handler,*ax,*bx);
-    if ((start)==-1 ) { 
-    *zf=1;
-    return 0;
+    if ((start)==-1 ) { // required segment not found
+        *zf=1;
+        return 0;
     }
     int succ=create_segment(cpu->memory_handler,"ES",start,*ax);
 
-   
+    
     *zf=!(succ);
-    if (!succ) return 0;
+    if (!succ) return 0; 
     for (int i=0;i<*ax;i++){
         store(cpu->memory_handler,"ES",i,int_to_point(0)); //constant pool? add it directly in int to point maybe
     }
-
+    //Saving a new ES segment in context 
     int* es=hashmap_get(cpu->context,"ES");
     *es=start;
 
@@ -463,14 +515,22 @@ int alloc_es_segment(CPU* cpu){
 }
 
 int free_es_segment(CPU* cpu){
+    /*
+        ES segment remove function
+        The function clears dynamic memory allocate by a segment ES
+        Input:
+            CPU * cpu -- initialized CPU
+        Output: 
+            1 in case of success
+            0 in other cases
+    */
     Segment* esseg=hashmap_get(cpu->memory_handler->allocated,"ES");
     if  (esseg==NULL) return 0;
 
     for (int i=0;i<esseg->size;i++){
         free(load(cpu->memory_handler,"ES",i)); //constant pool? add it directly in int to point maybe
     }
-
-    int succ=hashmap_remove(cpu->memory_handler->allocated,"ES");
+    int succ=remove_segment(cpu->memory_handler->allocated,"ES"); // treats memory of segment Object
     if (succ==0) return succ;
 
     int* es=hashmap_get(cpu->context,"ES");
