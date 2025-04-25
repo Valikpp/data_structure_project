@@ -1,4 +1,4 @@
-#include "exo6.h"
+#include "program.h"
 
 
 char *trim(char *str) {

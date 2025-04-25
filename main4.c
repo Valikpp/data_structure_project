@@ -1,4 +1,4 @@
-#include "exo6.h"
+#include "program.h"
 
 int main(){
     /*
@@ -9,7 +9,7 @@ int main(){
     //CPU initialization
     CPU * cpu = cpu_init(512);
 
-    //Parsing of pseudo-assembly programme
+    //Parsing of pseudo-assembly program
     ParserResult * parser = parse("test_pseudo_asm.txt");
     parser_show(parser);
     //variables allocation

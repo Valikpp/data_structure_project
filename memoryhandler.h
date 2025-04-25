@@ -1,6 +1,6 @@
-#ifndef EXO2
-#define EXO2
-#include "exo1.h"
+#ifndef MEMORYHANDLER
+#define MEMORYHANDLER
+#include "hashmap.h"
 
 typedef struct segment{
     int start;

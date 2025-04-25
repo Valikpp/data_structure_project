@@ -1,10 +1,10 @@
-#include "exo6.h"
+#include "program.h"
 
 int main(){
     /*
-        This main tests programme running management functions 
+        This main tests program running management functions 
     */
-    printf("===== This main tests programme running management functions =====\n");
+    printf("===== This main tests program running management functions =====\n");
 
     CPU * cpu = cpu_init(1024);
     ParserResult * parser = parse("test2.txt");

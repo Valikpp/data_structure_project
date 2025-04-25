@@ -1,4 +1,4 @@
-#include "exo6.h"
+#include "program.h"
 
 //clean terminal
 //usleep time before menu or press ENTER?

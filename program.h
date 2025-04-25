@@ -1,6 +1,6 @@
-#ifndef EXO6
-#define EXO6
-#include "exo4.h"
+#ifndef PROGRAM_EXEC
+#define PROGRAM_EXEC
+#include "cpu.h"
 
 char *trim(char *str);
 int search_and_replace(char **str, HashMap *values);

@@ -1,4 +1,4 @@
-#include "exo6.h"
+#include "program.h"
 
 int main(){
     /*
@@ -9,7 +9,7 @@ int main(){
     // CPU initialization
     CPU * cpu = setup_test_environment();
 
-    //Parsing of pseudo-assembly programme
+    //Parsing of pseudo-assembly program
     ParserResult * parser = parse("setup_env_test.txt");
     printf("\n--- PARSER initial state ---\n");
     parser_show(parser);

@@ -1,11 +1,11 @@
-#include "exo3.h"
+#include "parser.h"
 
 int nb_data_occ = 0;
 
 Instruction *parse_data_instruction(const char * line, HashMap *memory_locations){
     /*
         .DATA instructions parsing function: 
-        Parses an instruction of type .DATA from the original file into instruction type for the programme
+        Parses an instruction of type .DATA from the original file into instruction type for the program
         
         Input: 
             char * line -- line of .DATA in pseudo-assembly (Ex: x DW 47)
@@ -58,11 +58,11 @@ Instruction *parse_data_instruction(const char * line, HashMap *memory_locations
 Instruction *parse_code_instruction(const char *line, HashMap *labels, int code_count) {
     /*
         .CODE instructions parsing function: 
-        Parses an instruction of type .CODE from the original file into instruction type for the programme
+        Parses an instruction of type .CODE from the original file into instruction type for the program
         
         Input: 
             char * line -- line of .CODE in pseudo-assembly (Ex: MOV AX [0])
-            HashMap * labels -- hashmap containing pair (special label <-> line in programme) (Ex: loop <-> 5) 
+            HashMap * labels -- hashmap containing pair (special label <-> line in program) (Ex: loop <-> 5) 
         Output: Instruction * inst (Ex: inst->mnemonic = MOV, inst->operand1 = AX, inst->operand2 = [0])
     */
 
@@ -146,7 +146,7 @@ Instruction *parse_code_instruction(const char *line, HashMap *labels, int code_
 ParserResult *parse(const char *filename){
     /*
         Initial file parsing function: 
-        Parses all instructions from the original file into instructions type for the programme and store them in parser_result object
+        Parses all instructions from the original file into instructions type for the program and store them in parser_result object
         Input: 
             char * filename -- name of original file in pseudo-assembly  
         Output: ParserResult * parser -- an object of type ParserResult keeping:

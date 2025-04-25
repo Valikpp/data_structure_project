@@ -1,4 +1,4 @@
-#include "exo4.h"
+#include "cpu.h"
 
 CPU * cpu_init(int memory_size){
     /*

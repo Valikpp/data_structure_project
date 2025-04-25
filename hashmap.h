@@ -1,12 +1,13 @@
-#ifndef EXO1
-#define EXO1
+#ifndef HASHMAP
+#define HASHMAP
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
 #include <math.h>
 #include <limits.h>
-#include <unistd.h>  
+#include <unistd.h> 
+#include <regex.h>
 
 #define TABLE_SIZE 128
 #define TOMBSTONE ((void*)-1)

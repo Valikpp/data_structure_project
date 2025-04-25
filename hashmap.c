@@ -1,4 +1,4 @@
-#include "exo1.h"
+#include "hashmap.h"
 
 unsigned long simple_hash(const char *str){
     if (str==NULL){
