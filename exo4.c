@@ -59,7 +59,7 @@ CPU * cpu_init(int memory_size){
     if (succ == 0) { printf("Error cpu_init : failed to insert in hashmap \"context\"\n"); return NULL; }
 
     cpu->constant_pool = hashmap_create();
-    if (!cpu->constant_pool==NULL) { printf("Error cpu_init : failed to create hashmap \"constant_pool\"\n"); return NULL; }
+    if (cpu->constant_pool==NULL) { printf("Error cpu_init : failed to create hashmap \"constant_pool\"\n"); return NULL; }
 
 
     return cpu;
