@@ -1,7 +1,7 @@
 CFLAGS = -g -Wno-unused-parameter
 CC = gcc
 
-PROGRAMS = main1 main2 main3 main4 main5 main6 maincpu compiler
+PROGRAMS = main1 main2 main3 main4 main5 main6 maincpu executor
 
 .PHONY:	all clean
 
@@ -64,10 +64,10 @@ maincpu: maincpu.o exo6.o exo4.o exo3.o exo2.o exo1.o
 maincpu.o: maincpu.c
 	gcc $(CFLAGS) -c maincpu.c
 
-compiler: compiler.o exo6.o exo4.o exo3.o exo2.o exo1.o
+executor: executor.o exo6.o exo4.o exo3.o exo2.o exo1.o
 	$(CC) -o $@ $(CFLAGS) $^
-compiler.o: compiler.c
-	gcc $(CFLAGS) -c compiler.c
+executor.o: executor.c
+	gcc $(CFLAGS) -c executor.c
 
 clean:
 	rm -f *.o *~ $(PROGRAMS)
