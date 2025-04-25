@@ -423,7 +423,6 @@ void *resolve_addressing(CPU *cpu, const char *operand){
             void * pt -- pointer to required memory case
     */
     if (operand==NULL) { 
-        printf("Error resolve_addressing : operand not found \n"); 
         return NULL ; 
     }
     void *pt=immediate_addressing(cpu,operand);
