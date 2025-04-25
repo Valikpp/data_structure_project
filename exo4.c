@@ -97,6 +97,20 @@ void allocate_variables(CPU *cpu, Instruction** data_instructions,int data_count
             int data_count -- ParserResult->data_count
     */    
     // nb_data_occ -- external variable which contains the size of the space required to store the variables
+
+    if (cpu==NULL) { 
+        printf("Error allocate_variables : CPU not found \n"); 
+        return ; 
+    }
+    if (data_instructions==NULL) { 
+        printf("Error allocate_variables : \"data_instructions\" table not found \n"); 
+        return ; 
+    }
+    if (data_count==0) { 
+        printf("Error allocate_variables : data_count is null, no variables to allocate \n"); 
+        return ; 
+    }
+
     int succ=create_segment(cpu->memory_handler,"DS",cpu->memory_handler->free_list->start,nb_data_occ);
     if (succ==0) { 
         printf("Error allocate_variables : failed to create data segment \"DS\"\n"); 
@@ -117,7 +131,10 @@ void allocate_variables(CPU *cpu, Instruction** data_instructions,int data_count
                 buffer[buff_ind] = '\0';
                 int value;
                 sscanf(buffer," %d ",&value);
-                store(cpu->memory_handler,"DS",pos,int_to_point(value));
+                if (store(cpu->memory_handler,"DS",pos,int_to_point(value))==0) { 
+                printf("Error allocate_variables : storing in data segment unsuccessful at position %d, pos. Aborting.\n"); 
+                return ; 
+                }
                 // buffer value is overwritten, reset to empty (by putting the index away)
                 buffer[0] = '\0';
                 buff_ind = 0;
@@ -132,6 +149,10 @@ void allocate_variables(CPU *cpu, Instruction** data_instructions,int data_count
         int value;
         sscanf(buffer," %d ",&value);
         store(cpu->memory_handler,"DS",pos,int_to_point(value));
+        if (store(cpu->memory_handler,"DS",pos,int_to_point(value))==0) { 
+        printf("Error allocate_variables : storing in data segment unsuccessful at position %d, pos. Aborting.\n"); 
+        return ; 
+        }
         pos++;
         free_instruction(data_instructions[i]);
         data_instructions[i]=NULL;
@@ -139,6 +160,10 @@ void allocate_variables(CPU *cpu, Instruction** data_instructions,int data_count
 }
 
 void print_data_segment(CPU * cpu){
+    if (cpu==NULL) { 
+        printf("Error print_data_segment : CPU not found \n"); 
+        return ; 
+    }
     /*
         Data segment's values printing
         The function prints all data of Data Segment stored in CPU memory
@@ -192,6 +217,14 @@ void * immediate_addressing(CPU * cpu, const char * operand){
         Immediate addressing treatment
         Matches operand with immediate addressing pattern and updates pool of constants
     */ 
+   if (cpu==NULL) { 
+        printf("Error immediate_adressing : CPU not found \n"); 
+        return NULL ; 
+    }
+    if (operand==NULL) { 
+        printf("Error immediate_adressing : operand not found \n"); 
+        return NULL ; 
+    }
     char * pattern = "^[0-9]+$"; // string containing an integer
     if (!matches(pattern,operand)){
         return NULL;
@@ -203,7 +236,10 @@ void * immediate_addressing(CPU * cpu, const char * operand){
     int value;
     sscanf(operand,"%d",&value);
     result = int_to_point(value);
-    hashmap_insert(cpu->constant_pool,operand,result);
+    if (hashmap_insert(cpu->constant_pool,operand,result)==0){
+        printf("Error immediate_adressing : Failure to insert constant into hashmap \"constant pool\" \n"); 
+        return NULL ;
+    }
     return (void*)result;  
 }
 
@@ -212,12 +248,24 @@ void *register_addressing(CPU * cpu, const char*operand){
         Register addressing treatment
         Matches operand with register addressing pattern and returns a value of required register
     */ 
+    if (cpu==NULL) { 
+        printf("Error register_adressing : CPU not found \n"); 
+        return NULL ; 
+    }
+    if (operand==NULL) { 
+        printf("Error register_adressing : operand not found \n"); 
+        return NULL ; 
+    }
     char * pattern = "^[A-D]X$"; // Character between A and D + X
     if (!matches(pattern,operand)){
         return NULL;
     }
     int *result=(int *)hashmap_get(cpu->context,operand);
-    if (!result) return NULL;
+     if (result==NULL) { 
+        printf("Error register_adressing : CPU register not found in hashmap \"context\" \n"); 
+        return NULL ; 
+    }
+    
 
     return (void *) result;
 }
@@ -227,14 +275,24 @@ void *memory_direct_addressing(CPU * cpu, const char*operand){
         Memory direct addressing treatment
         Matches operand with memory direct addressing pattern and returns a value saved in cpu's memory at required position
     */ 
+    if (cpu==NULL) { 
+        printf("Error memory_direct_adressing : CPU not found \n"); 
+        return NULL ; 
+    }
+    if (operand==NULL) { 
+        printf("Error memory_direct_adressing : operand not found \n"); 
+        return NULL ; 
+    }
     char * pattern = "^\\[[0-9]+\\]$"; //integer in []
     if (!matches(pattern,operand)){
         return NULL;
     }
     int value;
     sscanf(operand,"[%d]",&value);
-    if (value>=cpu->memory_handler->total_size || value<0){
-        return NULL;
+    
+    if (load(cpu->memory_handler,"DS",value)==NULL){
+        printf("Error memory_direct_adressing : address in brackets out of bounds \n"); 
+        return NULL ; 
     }
 
     return load(cpu->memory_handler,"DS",value);
@@ -247,6 +305,14 @@ void * register_indirect_addressing(CPU * cpu, const char*operand){
         Matches operand with register indirect addressing pattern and returns a value saved in cpu's memory at position contained in required register
         Ex: [AX] -> value stored in AX-position in memory
     */ 
+   if (cpu==NULL) { 
+        printf("Error register_direct_adressing : CPU not found \n"); 
+        return NULL ; 
+    }
+    if (operand==NULL) { 
+        printf("Error register_direct_adressing : operand not found \n"); 
+        return NULL ; 
+    }
     char * pattern = "^\\[[A-D]X\\]$"; // Character between A and D + X in []
     if (!matches(pattern,operand)){
         return NULL;
@@ -258,8 +324,9 @@ void * register_indirect_addressing(CPU * cpu, const char*operand){
     int *result=(int *)hashmap_get(cpu->context,regist);
     free(regist);
     if (!result) return NULL;
-    if ((*(int*)result)>=cpu->memory_handler->total_size){
-        return NULL;
+    if (load(cpu->memory_handler,"DS",*(int*)result)==NULL){
+        printf("Error register_indirect_adressing : address in register out of bounds \n"); 
+        return NULL ; 
     }
     return load(cpu->memory_handler,"DS",*(int*)result);
 }
@@ -270,6 +337,14 @@ void *segment_override_addressing(CPU *cpu, const char *operand){
         Matches operand with pattern and returns a value saved in cpu's memory in explicit segment at position contained in required register
         MOV [ES:AX],10 -> AX-position in ES
     */ 
+    if (cpu==NULL) { 
+        printf("Error segment_override_adressing : CPU not found \n"); 
+        return NULL ; 
+    }
+    if (operand==NULL) { 
+        printf("Error segment_override_adressing : operand not found \n"); 
+        return NULL ; 
+    }
     char * pattern = "^\\[(D|C|S|E)S:[A-D]X\\]$"; // ((on of char from D,C,S,E)+S):(Character between A and D + X) in []
     if (!matches(pattern,operand)){
         return NULL;
@@ -284,8 +359,14 @@ void *segment_override_addressing(CPU *cpu, const char *operand){
     strncpy(reg2, operand + 4, 2); // Skip past '[XX:' (4 chars total)
     reg2[2] = '\0';
     int *vregist=(int *)hashmap_get(cpu->context,reg2);
-    if (!vregist) return NULL;
+    if (!vregist) 
+    printf("Error segment_override_adressing : register after colon not found \n"); 
+    return NULL;
     void * result = load(cpu->memory_handler,reg1,*vregist);
+    if (result==NULL) { 
+        printf("Error segment_override_adressing : failed to load, segment non existant or address in register out of bounds \n"); 
+        return NULL ; 
+    }
     free(reg1);
     free(reg2);
     return result;
@@ -341,7 +422,10 @@ void *resolve_addressing(CPU *cpu, const char *operand){
         Output:
             void * pt -- pointer to required memory case
     */
-    if (!operand) return NULL;
+    if (operand==NULL) { 
+        printf("Error resolve_addressing : operand not found \n"); 
+        return NULL ; 
+    }
     void *pt=immediate_addressing(cpu,operand);
     if (!pt){
         pt=register_addressing(cpu, operand);
@@ -354,6 +438,10 @@ void *resolve_addressing(CPU *cpu, const char *operand){
     }
     if (!pt){
         pt=segment_override_addressing(cpu,operand);
+    }
+    if (pt==NULL) { 
+        printf("Error resolve_adressing : Failed to resolve addressing , Wrong operand format for operand %s \n,"); 
+        return NULL ; 
     }
     return pt;
 }

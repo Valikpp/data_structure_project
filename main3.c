@@ -5,7 +5,7 @@ int main(){
         This main tests Parser management functions 
     */
     printf("===== This main tests Parser management functions =====\n");
-    //parsing of pseudo-assembler
+    //parsing of pseudo-assembly
     ParserResult * parser = parse("test_pseudo_asm.txt");
     
     parser_show(parser);

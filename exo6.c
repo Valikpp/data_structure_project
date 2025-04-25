@@ -94,7 +94,7 @@ int resolve_constants(ParserResult * result){
         Replaces variables with their address in the data segment and labels with their address in the code.
         
         Input: 
-            ParserResult * result -- result of pseudo-assembler parse
+            ParserResult * result -- result of pseudo-assembly parse
         Output: 
             1 in case of successful replace for all Instructions
             0 in other cases

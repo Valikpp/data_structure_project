@@ -9,7 +9,7 @@ int main(){
     //CPU initialization
     CPU * cpu = cpu_init(512);
 
-    //Parsing of pseudo-assembler programme
+    //Parsing of pseudo-assembly programme
     ParserResult * parser = parse("test_pseudo_asm.txt");
     parser_show(parser);
     //variables allocation

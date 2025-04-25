@@ -9,7 +9,7 @@ int main(){
     // CPU initialization
     CPU * cpu = setup_test_environment();
 
-    //Parsing of pseudo-assembler programme
+    //Parsing of pseudo-assembly programme
     ParserResult * parser = parse("setup_env_test.txt");
     printf("\n--- PARSER initial state ---\n");
     parser_show(parser);

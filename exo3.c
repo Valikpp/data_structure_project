@@ -8,7 +8,7 @@ Instruction *parse_data_instruction(const char * line, HashMap *memory_locations
         Parses an instruction of type .DATA from the original file into instruction type for the programme
         
         Input: 
-            char * line -- line of .DATA in pseudo-assembler (Ex: x DW 47)
+            char * line -- line of .DATA in pseudo-assembly (Ex: x DW 47)
             HashMap * memory_locations -- hashmap containing pair (variable_name <-> position_in_memory) 
         Output: Instruction * inst (Ex: inst->mnemonic = x, inst->operand1 = DW, inst->operand2 = 47)
     */
@@ -61,7 +61,7 @@ Instruction *parse_code_instruction(const char *line, HashMap *labels, int code_
         Parses an instruction of type .CODE from the original file into instruction type for the programme
         
         Input: 
-            char * line -- line of .CODE in pseudo-assembler (Ex: MOV AX [0])
+            char * line -- line of .CODE in pseudo-assembly (Ex: MOV AX [0])
             HashMap * labels -- hashmap containing pair (special label <-> line in programme) (Ex: loop <-> 5) 
         Output: Instruction * inst (Ex: inst->mnemonic = MOV, inst->operand1 = AX, inst->operand2 = [0])
     */
@@ -148,7 +148,7 @@ ParserResult *parse(const char *filename){
         Initial file parsing function: 
         Parses all instructions from the original file into instructions type for the programme and store them in parser_result object
         Input: 
-            char * filename -- name of original file in pseudo-assembler  
+            char * filename -- name of original file in pseudo-assembly  
         Output: ParserResult * parser -- an object of type ParserResult keeping:
                     1) all parsed .DATA and .CODE instructions
                     2) number of .DATA and .CODE instructions
@@ -431,7 +431,7 @@ void* store(MemoryHandler *handler, const char *segment_name, int pos, void *dat
         return NULL;
     }
     if (pos >= seg->size){
-        printf("Segmentation fault store in memory tab: value out of bounds\n");
+        printf("Segmentation fault store in memory table: value out of bounds\n");
         return NULL;
     }
 
@@ -457,7 +457,7 @@ void *load(MemoryHandler *handler, const char *segment_name, int pos){
         return NULL;
     }
     if (pos >= seg->size){
-        printf("Segmentation fault load in memory tab: value out of bounds\n");
+        printf("Segmentation fault load in memory table: value out of bounds\n");
         return NULL;
     }
     return (handler->memory[seg->start+pos]);
