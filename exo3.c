@@ -349,7 +349,6 @@ void free_instruction(Instruction *inst){
         printf("Error free_instruction : no instruction found\n");
         return;
     }
-    print_instruction(inst);
     free(inst->mnemonic);
     if (inst->operand1) free(inst->operand1);
     if (inst->operand2) free(inst->operand2);   

@@ -530,7 +530,7 @@ int free_es_segment(CPU* cpu){
     for (int i=0;i<esseg->size;i++){
         free(load(cpu->memory_handler,"ES",i)); //constant pool? add it directly in int to point maybe
     }
-    int succ=remove_segment(cpu->memory_handler->allocated,"ES"); // treats memory of segment Object
+    int succ=remove_segment(cpu->memory_handler,"ES"); // treats memory of segment Object
     if (succ==0) return succ;
 
     int* es=hashmap_get(cpu->context,"ES");
