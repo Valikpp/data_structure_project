@@ -99,7 +99,10 @@ int resolve_constants(ParserResult * result){
             1 in case of successful replace for all Instructions
             0 in other cases
     */
-    if (!result) return 0;
+    if (result==NULL) {
+    printf("Error resolve_constants : no parser found \n");
+    return 0;
+    }
     for(int i = 0; i<result->code_count;i++){
         Instruction * inst = result->code_instructions[i];
         if(inst->operand2){ // Current instruction own an operand2
@@ -132,7 +135,10 @@ void allocate_code_segment(CPU *cpu, Instruction **code_instructions, int code_c
             int code_count -- number of .CODE instructions
     */
     int start = find_free_address_strategy(cpu->memory_handler,code_count,1);
-    create_segment(cpu->memory_handler,"CS",start,code_count);
+    if (create_segment(cpu->memory_handler,"CS",start,code_count)==0) {
+        printf("Error allocate_code_segment : segment creation failed \n");
+        return ;
+                }
     for (int i=0;i<code_count;i++){
         store(cpu->memory_handler,"CS",i,code_instructions[i]);
     }

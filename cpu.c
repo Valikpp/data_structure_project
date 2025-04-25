@@ -132,7 +132,7 @@ void allocate_variables(CPU *cpu, Instruction** data_instructions,int data_count
                 int value;
                 sscanf(buffer," %d ",&value);
                 if (store(cpu->memory_handler,"DS",pos,int_to_point(value))==0) { 
-                printf("Error allocate_variables : storing in data segment unsuccessful at position %d, pos. Aborting.\n"); 
+                printf("Error allocate_variables : storing in data segment unsuccessful at position %d. Aborting.\n", pos); 
                 return ; 
                 }
                 // buffer value is overwritten, reset to empty (by putting the index away)
@@ -150,7 +150,7 @@ void allocate_variables(CPU *cpu, Instruction** data_instructions,int data_count
         sscanf(buffer," %d ",&value);
         store(cpu->memory_handler,"DS",pos,int_to_point(value));
         if (store(cpu->memory_handler,"DS",pos,int_to_point(value))==0) { 
-        printf("Error allocate_variables : storing in data segment unsuccessful at position %d, pos. Aborting.\n"); 
+        printf("Error allocate_variables : storing in data segment unsuccessful at position %d. Aborting.\n", pos); 
         return ; 
         }
         pos++;
@@ -440,7 +440,7 @@ void *resolve_addressing(CPU *cpu, const char *operand){
         pt=segment_override_addressing(cpu,operand);
     }
     if (pt==NULL) { 
-        printf("Error resolve_adressing : Failed to resolve addressing , Wrong operand format for operand %s \n,"); 
+        printf("Error resolve_adressing : Failed to resolve addressing , Wrong operand format for operand %s \n", operand); 
         return NULL ; 
     }
     return pt;
@@ -455,8 +455,18 @@ void handle_MOV(CPU * cpu, void * src, void *dest){
             void * dest -- destination pointer
         Output:
             NULL
-    */
-    if (!src || !dest) return;
+    */if (cpu==NULL) { 
+        printf("Error handle_mov : no CPU found  \n,"); 
+        return  ; 
+    }
+    if (src==NULL) { 
+        printf("Error handle_mov : no source found\n"); 
+        return ; 
+    }
+    if (dest==NULL) { 
+        printf("Error handle_mov : no destination found\n"); 
+        return  ; 
+    }
     *((int*)dest) = *((int*)src);
 }
 
@@ -471,6 +481,10 @@ int push_value(CPU *cpu, int value){ //retourne -1 et pas 0 en cas d'erreur
             1 in case of success
             -1 in other case
     */
+    if (cpu==NULL) { 
+        printf("Error push_value : no CPU found\n"); 
+        return  -1; 
+    }
     int *sp=hashmap_get(cpu->context,"SP");
     if (!sp || (*sp)<0) return -1;
     void* s=store(cpu->memory_handler,"SS",*sp,int_to_point(value));
@@ -491,6 +505,14 @@ int pop_value(CPU *cpu, int* dest){ //caster le void* à l'appel?
             1 in case of success + value returned by parameter
             -1 in other case
     */
+    if (dest==NULL) { 
+        printf("Error push_value : no destination found\n"); 
+        return  -1; 
+    }
+    if (cpu==NULL) { 
+        printf("Error push_value : no CPU found\n"); 
+        return  -1; 
+    }
     int *sp=hashmap_get(cpu->context,"SP");
     if (*sp>=128) return -1;
     void*l=load(cpu->memory_handler,"SS",(*sp)+1);
@@ -513,17 +535,31 @@ int alloc_es_segment(CPU* cpu){
             1 in case of success
             0 in other cases
     */
+    
     int* ax=hashmap_get(cpu->context,"AX"); //Get value of AX register
+    if (ax==NULL ){
+        printf("Error alloc_es_segment :  register AX not found \n ");
+     return 0;   
+    } 
     int *bx=hashmap_get(cpu->context,"BX"); //Get value of BX register
+    if (bx==NULL ){
+        printf("Error alloc_es_segment :  register BX not found \n ");
+     return 0;   
+    } 
     if (!((*bx==0) || (*bx==1)|| (*bx==2) ) ){
         printf("Error alloc_es_segment : register BX not properly set to an allocating strategy. Set to 0, 1 or 2\n ");
         usleep(1300000);
      return 0;   
     } 
     int *zf=hashmap_get(cpu->context,"ZF"); //Get value of ZF register
+    if (zf==NULL ){
+        printf("Error alloc_es_segment : register ZF not found \n ");
+     return 0;   
+    } 
     int start=find_free_address_strategy(cpu->memory_handler,*ax,*bx);
-    if ((start)==-1 ) { // required segment not found
+    if (start==-1 ) { // required segment not found
         *zf=1;
+        printf("Error alloc_es_segment : no segment found to allocate Extra Segment \n ");
         return 0;
     }
     int succ=create_segment(cpu->memory_handler,"ES",start,*ax);
@@ -536,6 +572,10 @@ int alloc_es_segment(CPU* cpu){
     }
     //Saving a new ES segment in context 
     int* es=hashmap_get(cpu->context,"ES");
+    if (es==NULL ){
+        printf("Error alloc_es_segment :  register ES not found \n ");
+     return 0;   
+    } 
     *es=start;
 
     
@@ -554,13 +594,20 @@ int free_es_segment(CPU* cpu){
             1 in case of success
             0 in other cases
     */
+   if (cpu==NULL) { 
+        printf("Error free_es_segment : no CPU found\n"); 
+        return  -1; 
+    }
     Segment* esseg=hashmap_get(cpu->memory_handler->allocated,"ES");
-    if  (esseg==NULL) return 0;
+    if  (esseg==NULL) {
+        printf("Error free_es_segment : Extra Segment not found to free \n"); 
+    return 0;
+    }
 
     for (int i=0;i<esseg->size;i++){
-        free(load(cpu->memory_handler,"ES",i)); //constant pool? add it directly in int to point maybe
+        free(load(cpu->memory_handler,"ES",i)); 
     }
-    int succ=remove_segment(cpu->memory_handler,"ES"); // treats memory of segment Object
+    int succ=remove_segment(cpu->memory_handler,"ES"); 
     if (succ==0) return succ;
 
     int* es=hashmap_get(cpu->context,"ES");
