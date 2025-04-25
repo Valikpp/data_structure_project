@@ -28,6 +28,8 @@ void print_free_list(MemoryHandler *handler);
 int remove_segment(MemoryHandler * handler, const char *name);
 
 
+void* store(MemoryHandler *handler, const char *segment_name, int pos, void *data);
+void *load(MemoryHandler *handler, const char *segment_name, int pos);
 
 
 

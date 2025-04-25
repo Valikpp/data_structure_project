@@ -311,3 +311,54 @@ void print_free_list(MemoryHandler *handler){
     printf("\n");
 }
 
+
+void* store(MemoryHandler *handler, const char *segment_name, int pos, void *data){
+    /*
+        Save to memory function
+        The function storing a data at desired position of segment
+        Input: 
+            MemoryHandler * handler -- initialized memory handler of CPU
+            char * segment_name -- name of desired segment
+            int pos -- position in segment (!!! RELATIONAL PARAMETER !!!)
+            void * data -- data to save at segment[pos]
+        Output: 
+            data in case of success
+            NULL in case of error
+    */
+    Segment *seg=(Segment *)hashmap_get(handler->allocated,segment_name);
+    if (seg==NULL){
+        printf("Error store : segment not found in \"allocated\" hashmap\n");
+        return NULL;
+    }
+    if (pos >= seg->size){
+        printf("Segmentation fault store in memory table: value out of bounds\n");
+        return NULL;
+    }
+
+    handler->memory[seg->start + pos] = data;
+    return data;
+}
+
+void *load(MemoryHandler *handler, const char *segment_name, int pos){
+    /*
+        Load from memory function
+        The function loading a data from desired position of segment
+        Input: 
+            MemoryHandler * handler -- initialized memory handler of CPU
+            char * segment_name -- name of desired segment
+            int pos -- position in segment (!!! RELATIONAL PARAMETER !!!)
+        Output: 
+            data in case of success
+            NULL in case of error
+    */
+    Segment *seg=(Segment *)hashmap_get(handler->allocated,segment_name);
+    if (seg==NULL){
+        printf("Error load : segment not found in \"allocated\" hashmap\n");
+        return NULL;
+    }
+    if (pos >= seg->size){
+        printf("Segmentation fault load in memory table: value out of bounds\n");
+        return NULL;
+    }
+    return (handler->memory[seg->start+pos]);
+}
