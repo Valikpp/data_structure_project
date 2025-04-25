@@ -110,8 +110,8 @@ void allocate_variables(CPU *cpu, Instruction** data_instructions,int data_count
         printf("Error allocate_variables : data_count is null, no variables to allocate \n"); 
         return ; 
     }
-
-    int succ=create_segment(cpu->memory_handler,"DS",cpu->memory_handler->free_list->start,nb_data_occ);
+    int start = find_free_address_strategy(cpu->memory_handler,nb_data_occ,0);
+    int succ=create_segment(cpu->memory_handler,"DS",start,nb_data_occ);
     if (succ==0) { 
         printf("Error allocate_variables : failed to create data segment \"DS\"\n"); 
         return ; 
@@ -500,64 +500,6 @@ int pop_value(CPU *cpu, int* dest){ //caster le void* à l'appel?
     return 1;
 }
 
-
-int find_free_address_strategy(MemoryHandler *handler, int size, int strategy){
-    /*
-        Segment choice with selected strategy
-        The function seeking for a free memory segment according to the strategy: 
-
-            - First Fit (0): Allocates the first sufficiently large free memory segment.
-            
-            - Best Fit (1): Finds the memory segment whose size is closest to the requested size,
-              with a view to minimising potential wastage.
-            
-            - Worst Fit (2): Selects the segment with the largest remaining free space.
-
-        Input:
-            MemoryHandler *handler -- initialized Memory Handler
-            int size -- minimal size required for segment
-            int strategy -- 
-        Output: 
-    */
-    Segment *list=handler->free_list;
-    int min,max,res;
-    switch (strategy) {
-        case 0:
-            // First free segment
-            while (list){
-                if (list->size>=size) return list->start;
-                list=list->next;
-            }
-            break;
-        case 1:
-            min = INT_MAX;
-            res=-1;
-            // Segment with minimal potential wastage
-            while (list){
-                int dif=list->size-size;
-                if (dif>=0 && dif<min) {
-                min=dif;
-                res=list->start;
-                }
-                list=list->next;
-            }
-            return res;
-            break;
-        case 2:
-            max=-1;
-            res=-1;
-            // Segment with largest remaining free space
-            while (list){
-                if (list->size>max && list->size>=max) res=list->start;
-                list=list->next;
-            }
-            return res;
-            break;
-        
-
-    }
-    return -1;
-}  
 
 int alloc_es_segment(CPU* cpu){
     /*

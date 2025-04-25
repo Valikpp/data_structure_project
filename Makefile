@@ -1,4 +1,4 @@
-CFLAGS = -g -Wno-unused-parameter
+CFLAGS = -Wno-unused-parameter
 CC = gcc
 
 PROGRAMS = main1 main2 main3 main4 main5 main6 maincpu executor

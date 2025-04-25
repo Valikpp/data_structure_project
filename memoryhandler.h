@@ -21,6 +21,8 @@ Segment* find_free_segment(MemoryHandler* handler, int start, int size, Segment 
 
 int create_segment(MemoryHandler * handler,const char *name,int start, int size);
 
+int find_free_address_strategy(MemoryHandler *handler, int size, int strategy);
+
 void print_free_list(MemoryHandler *handler);
 
 int remove_segment(MemoryHandler * handler, const char *name);
