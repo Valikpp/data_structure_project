@@ -2,21 +2,21 @@
 
 ## Description
 
-A simplified CPU simulator and pseudo-assembly interpreter written in C, designed for educational use. It models key CPU components—registers, ALU, memory segments—and executes programs written in a custom pseudo-assembly language. citeturn0file0
+A simplified CPU simulator and pseudo-assembly interpreter written in C, designed for educational use. It models key CPU components—registers, ALU, memory segments—and executes programs written in a custom pseudo-assembly language.
 
 ## Features
 
-- **Register File**: Implements general-purpose registers (AX, BX, CX, DX) and special registers (IP, ZF, SF, SP, BP, ES) using a generic hash map. citeturn0file0
-- **Memory Management**: Simulates RAM with dynamic segments, free-list management, and allocation strategies (First Fit, Best Fit, Worst Fit). citeturn0file0
-- **Pseudo-Assembly Parser**: Reads `.DATA` and `.CODE` sections from text files, builds instruction arrays, and resolves labels and variables. citeturn0file0
-- **Instruction Set**: Supports MOV, ADD, CMP, JMP, JZ, JNZ, HALT, PUSH, POP, ALLOC, FREE with various addressing modes. citeturn0file0
+- **Register File**: Implements general-purpose registers (AX, BX, CX, DX) and special registers (IP, ZF, SF, SP, BP, ES) using a generic hash map.
+- **Memory Management**: Simulates RAM with dynamic segments, free-list management, and allocation strategies (First Fit, Best Fit, Worst Fit).
+- **Pseudo-Assembly Parser**: Reads `.DATA` and `.CODE` sections from text files, builds instruction arrays, and resolves labels and variables. 
+- **Instruction Set**: Supports MOV, ADD, CMP, JMP, JZ, JNZ, HALT, PUSH, POP, ALLOC, FREE with various addressing modes. 
 - **Execution Modes**:
   - **Step-by-Step GUI**: Interactive execution with state preview (`maincpu`).
   - **Batch Executor**: Direct run to completion with final state output (`executor`).
 
 ## Requirements
 
-- **Platforms**: macOS, Linux (uses `<regex.h>`, not supported on Windows). citeturn0file0
+- **Platforms**: macOS, Linux (uses `<regex.h>`, not supported on Windows). 
 - **Compiler**: GCC 14.2.0 or compatible C compiler.
 - **Build System**: GNU Make
 
@@ -46,8 +46,7 @@ make executor && ./executor <filename.txt>
 ## Repository Structure
 
 ```
-├── src/                 # C source files
-├── include/             # Header files
+├── C-files              # C source files
 ├── tests/               # Sample `.txt` pseudo-assembly programs
 │   ├── test.txt
 │   ├── test2.txt
@@ -59,11 +58,12 @@ make executor && ./executor <filename.txt>
 
 ## Core Data Structures
 
-- **HashMap**: Open-addressing hash table for registers, labels, and allocated segments. citeturn0file0
-- **Segment**: Linked-list node representing a memory segment with `start`, `size`, and `next` pointer. citeturn0file0
-- **MemoryHandler**: Manages overall memory array, free-list, and allocated segments map. citeturn0file0
-- **Instruction**: Represents one pseudo-assembly instruction with `mnemonic`, `operand1`, `operand2`. citeturn0file0
-- **ParserResult**: Holds parsed `.DATA` and `.CODE` arrays, counts, and hash maps for labels and memory locations. citeturn0file0
+- **HashMap**: Open-addressing hash table for registers, labels, and allocated segments. 
+- **Segment**: Linked-list node representing a memory segment with `start`, `size`, and `next` pointer. 
+- **MemoryHandler**: Manages overall memory array, free-list, and allocated segments map. 
+- **Instruction**: Represents one pseudo-assembly instruction with `mnemonic`, `operand1`, `operand2`. 
+- **ParserResult**: Holds parsed `.DATA` and `.CODE` arrays, counts, and hash maps for labels and memory locations. 
+- **CPU**: The `CPU` struct encapsulates the entire simulated processor state
 
 ## Pseudo-Assembly Language
 
@@ -119,7 +119,7 @@ HALT
 | FREE         | Free the ES segment                                      |
 | HALT         | Stop execution                                           |
 
-Refer to source for addressing modes: immediate, register, direct, indirect, segment override. citeturn0file0
+Refer to source for addressing modes: immediate, register, direct, indirect, segment override. 
 
 ## Contributing
 
