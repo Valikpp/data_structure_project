@@ -359,9 +359,10 @@ void *segment_override_addressing(CPU *cpu, const char *operand){
     strncpy(reg2, operand + 4, 2); // Skip past '[XX:' (4 chars total)
     reg2[2] = '\0';
     int *vregist=(int *)hashmap_get(cpu->context,reg2);
-    if (!vregist) 
-    printf("Error segment_override_adressing : register after colon not found \n"); 
-    return NULL;
+    if (!vregist){
+        printf("Error segment_override_adressing : register after colon not found \n"); 
+        return NULL;
+    }
     void * result = load(cpu->memory_handler,reg1,*vregist);
     if (result==NULL) { 
         printf("Error segment_override_adressing : failed to load, segment non existant or address in register out of bounds \n"); 

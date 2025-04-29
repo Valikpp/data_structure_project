@@ -334,7 +334,9 @@ void* store(MemoryHandler *handler, const char *segment_name, int pos, void *dat
         printf("Segmentation fault store in memory table: value out of bounds\n");
         return NULL;
     }
-
+    if (handler->memory[seg->start + pos]!=NULL){
+        free(handler->memory[seg->start + pos]);
+    }
     handler->memory[seg->start + pos] = data;
     return data;
 }
