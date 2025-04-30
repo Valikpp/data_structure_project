@@ -53,8 +53,8 @@ Segment* find_free_segment(MemoryHandler* handler, int start, int size, Segment 
     Segment * prec = NULL;
     while (free_list){
         // Current segment satisfies desired start and size
-        if((free_list->start <= start)){
-            if(free_list->size>=size){
+        if((free_list->start <= start && start<=free_list->start+ free_list->size)){
+            if(free_list->start + free_list->size >= start + size){
             *prev=prec;
             return free_list;
             }else{
@@ -110,7 +110,7 @@ int create_segment(MemoryHandler * handler,const char *name,int start, int size)
         assert(before);
         before->start = seg_libre->start;
         before->size = start-seg_libre->start; //initialize next by NULL
-        //merging with previous
+        //link with the previous
         if(prev){
             prev->next = before;
         } else{
